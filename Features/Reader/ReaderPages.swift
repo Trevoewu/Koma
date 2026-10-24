@@ -51,6 +51,7 @@ struct PagedReader: View {
 struct VerticalReader: View {
     @Bindable var model: ReaderModel
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var position = ScrollPosition(idType: Int.self)
     @State private var offset: CGFloat = 0
     @State private var viewportHeight: CGFloat = 0
@@ -70,7 +71,10 @@ struct VerticalReader: View {
                             pageTops[page] = top
                             updateCurrentPage()
                         }
-                        .onDisappear { pageTops[page] = nil }
+                        .onDisappear {
+                            pageTops[page] = nil
+                            updateCurrentPage()
+                        }
                         .accessibilityLabel(Text("Page \(model.pageLabel(for: [page]))"))
                 }
             }
@@ -96,7 +100,11 @@ struct VerticalReader: View {
             handleTap(atX: location.x)
         }
         .onChange(of: model.verticalScrollRequest) { _, request in
-            if let request { position.scrollTo(id: request.page, anchor: .top) }
+            if let request {
+                withAnimation(request.animated && !reduceMotion ? .smooth(duration: 0.35) : nil) {
+                    position.scrollTo(id: request.page, anchor: .top)
+                }
+            }
         }
         // A new scroll view starts at the top, so scroll to the saved page after
         // the first layout (on open and on a mode change).
@@ -130,7 +138,7 @@ struct VerticalReader: View {
         let maxOffset = max(contentHeight - viewportHeight, 0)
         let target = min(max(offset + direction * viewportHeight * 0.85, 0), maxOffset)
         guard abs(target - offset) > 1 else { return }
-        withAnimation(.easeInOut(duration: 0.25)) {
+        withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) {
             position.scrollTo(y: target)
             model.controlsVisible = false
             model.showsModeMenu = false
@@ -140,6 +148,11 @@ struct VerticalReader: View {
     /// The current page is the one that covers the line a quarter down the screen,
     /// so a thin strip of the page before it at the top does not count.
     private func updateCurrentPage() {
+        let visible = Set(pageTops.compactMap { page, top in
+            let bottom = top + viewportWidth / model.aspectRatio(of: page)
+            return top < offset + viewportHeight && bottom > offset ? page : nil
+        })
+        model.verticalVisiblePagesChanged(visible)
         let line = offset + viewportHeight * 0.25
         guard let page = pageTops.filter({ $0.value <= line }).max(by: { $0.key < $1.key })?.key,
               page != model.verticalPosition

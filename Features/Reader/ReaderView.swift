@@ -56,6 +56,9 @@ struct ReaderView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { model.saveNow() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
+            model.cache.discardRecentImages()
+        }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = keepScreenOn }
         .onDisappear {
             model.saveNow()

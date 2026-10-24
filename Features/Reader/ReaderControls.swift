@@ -194,7 +194,7 @@ struct ReaderControls: View {
                      fillsFromTrailing: model.isRightToLeft,
                      bookmarks: model.volume.bookmarkedPages,
                      scrubPage: $scrubPage,
-                     onCommit: model.jump(toPage:))
+                     onCommit: { model.jump(toPage: $0) })
     }
 
     private var pageLabel: String {

@@ -28,6 +28,7 @@ final class ReaderModel {
 
     struct ScrollRequest: Equatable {
         let page: Int
+        var animated = false
         let token = UUID()
     }
 
@@ -46,6 +47,7 @@ final class ReaderModel {
     private(set) var spreadsAvailable = false
     private(set) var viewport: CGSize = .zero
     private var displayScale: CGFloat = 2
+    private var visibleVerticalPages: Set<Int> = []
     /// Pixel size per page, read from the file headers (no decoding). nil = not known yet.
     private var pageSizes: [CGSize?]
     /// Pages that play as animations (GIF, APNG, WebP with more than one frame).
@@ -158,7 +160,7 @@ final class ReaderModel {
 
     private func step(by delta: Int) {
         if mode == .vertical {
-            jump(toPage: currentPage + delta)
+            jump(toPage: currentPage + delta, animated: true)
             return
         }
         guard let g = groupPosition else { return }
@@ -172,11 +174,11 @@ final class ReaderModel {
     }
 
     /// Slider: go straight to a page, without animation.
-    func jump(toPage page: Int) {
+    func jump(toPage page: Int, animated: Bool = false) {
         let page = min(max(page, 0), max(pageCount - 1, 0))
         if mode == .vertical {
             verticalPosition = page
-            verticalScrollRequest = ScrollRequest(page: page)
+            verticalScrollRequest = ScrollRequest(page: page, animated: animated)
             didMove(to: page)
         } else if let g = groups.firstIndex(where: { $0.contains(page) }) {
             groupPosition = g
@@ -277,26 +279,35 @@ final class ReaderModel {
 
     // MARK: Pages in memory
 
-    /// Loads the visible pages and 2 groups (or pages) on each side. Drops all others.
+    /// Geometry can expose several short pages at once. Keep all of them ready.
+    func verticalVisiblePagesChanged(_ pages: Set<Int>) {
+        guard pages != visibleVerticalPages else { return }
+        visibleVerticalPages = pages
+        prefetch()
+    }
+
+    /// Current/visible pages first, then alternating neighbors in both directions.
     private func prefetch() {
-        guard viewport.width > 0 else { return }
-        var keep = Set<Int>()
+        guard viewport.width > 0, pageCount > 0 else { return }
+        var pages: [Int] = []
         if mode == .vertical {
-            let range = max(currentPage - 2, 0)...min(currentPage + 4, max(pageCount - 1, 0))
-            for page in range where pageCount > 0 {
-                keep.insert(page)
-                cache.request(page, maxPixelSize: verticalPixelSize(for: page))
+            pages = [currentPage] + visibleVerticalPages.sorted()
+            for distance in 1...4 {
+                pages += [currentPage - distance, currentPage + distance]
             }
         } else if let g = groupPosition ?? groups.firstIndex(where: { $0.contains(currentPage) }) {
-            // The current group first, so it loads first.
             for index in [g, g + 1, g - 1, g + 2, g - 2] where groups.indices.contains(index) {
-                for page in groups[index] {
-                    keep.insert(page)
-                    cache.request(page, maxPixelSize: pagedPixelSize(for: page, in: groups[index]))
-                }
+                pages += groups[index]
             }
         }
-        cache.keepOnly(keep)
+        var seen = Set<Int>()
+        let requests = pages.filter { pageURLs.indices.contains($0) && seen.insert($0).inserted }
+            .map { page in
+                let size = mode == .vertical ? verticalPixelSize(for: page)
+                    : pagedPixelSize(for: page, in: groups.first { $0.contains(page) } ?? [page])
+                return (page: page, size: size)
+            }
+        cache.update(requests)
     }
 
     /// The decode size so a page fills its slot on screen, and no bigger.
@@ -317,6 +328,7 @@ final class ReaderModel {
 
     private func rebuildGroups() {
         let page = currentPage
+        visibleVerticalPages = []
         if usesSpreads {
             groups = PageMetrics.spreads(count: pageCount) { [pageSizes] index in
                 guard let size = pageSizes[index] else { return false }
@@ -335,7 +347,7 @@ final class ReaderModel {
 
 // MARK: - Page cache
 
-/// Downsampled page images for the pages near the current one.
+/// Downsampled active pages plus a bounded cache of recently viewed pages.
 /// Every image goes through ImageDownsampler, at the size it is shown.
 ///
 /// At most 2 pages decode at the same time, in the order they were asked for
@@ -352,41 +364,67 @@ final class PageCache {
 
     init(urls: [URL]) { self.urls = urls }
 
-    func request(_ page: Int, maxPixelSize: CGFloat) {
-        guard urls.indices.contains(page), running[page] == nil,
-              !waiting.contains(where: { $0.page == page }) else { return }
-        // Already loaded at about this size (rotation can make it a bit smaller).
-        if let loaded = loadedSize[page], loaded >= maxPixelSize * 0.9 { return }
-        waiting.append((page, maxPixelSize))
+    @ObservationIgnored private var protectedPages: Set<Int> = []
+    @ObservationIgnored private var recency: [Int: UInt64] = [:]
+    @ObservationIgnored private var clock: UInt64 = 0
+    // The active window stays resident. Older pages share a bounded reuse budget.
+    @ObservationIgnored private let reuseBudget = 96 * 1024 * 1024
+
+    func update(_ requests: [(page: Int, size: CGFloat)]) {
+        protectedPages = Set(requests.map(\.page))
+        for (page, task) in running where !protectedPages.contains(page) {
+            // Keep the slot occupied until the underlying decode finishes.
+            task.cancel()
+        }
+        waiting = requests.filter { request in
+            guard urls.indices.contains(request.page) else { return false }
+            clock += 1
+            recency[request.page] = clock
+            return (loadedSize[request.page] ?? 0) < request.size * 0.9
+        }
+        trimRecentImages()
         startNext()
     }
 
-    func keepOnly(_ pages: Set<Int>) {
-        for page in images.keys where !pages.contains(page) {
+    /// Release the reuse cache under memory pressure without blanking active pages.
+    func discardRecentImages() {
+        for page in Array(images.keys) where !protectedPages.contains(page) {
             images[page] = nil
             loadedSize[page] = nil
+            recency[page] = nil
         }
-        waiting.removeAll { !pages.contains($0.page) }
-        for (page, task) in running where !pages.contains(page) {
-            task.cancel()
-            running[page] = nil
+    }
+
+    private func trimRecentImages() {
+        let recent = images.keys.filter { !protectedPages.contains($0) }
+            .sorted { (recency[$0] ?? 0) > (recency[$1] ?? 0) }
+        var bytes = 0
+        for (index, page) in recent.enumerated() {
+            let bitmap = images[page]?.cgImage
+            bytes += (bitmap?.bytesPerRow ?? 0) * (bitmap?.height ?? 0)
+            if bytes > reuseBudget || index >= 24 {
+                images[page] = nil
+                loadedSize[page] = nil
+                recency[page] = nil
+            }
         }
-        startNext()
     }
 
     private func startNext() {
-        while running.count < maxConcurrentDecodes, !waiting.isEmpty {
-            let (page, size) = waiting.removeFirst()
+        while running.count < maxConcurrentDecodes,
+              let next = waiting.firstIndex(where: { running[$0.page] == nil }) {
+            let (page, size) = waiting.remove(at: next)
             let url = urls[page]
             running[page] = Task { [weak self] in
                 let image = await ImageDownsampler.load(url, maxPixelSize: size)
                 guard let self else { return }
-                // nil = dropped by keepOnly while it was decoding.
-                guard self.running.removeValue(forKey: page) != nil else { return self.startNext() }
-                if let image {
+                self.running[page] = nil
+                if !Task.isCancelled, let image {
                     self.images[page] = image
                     self.loadedSize[page] = size
+                    self.waiting.removeAll { $0.page == page && $0.size <= size / 0.9 }
                 }
+                self.trimRecentImages()
                 self.startNext()
             }
         }
