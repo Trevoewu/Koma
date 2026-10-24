@@ -249,9 +249,10 @@ final class ReaderModel {
             return
         }
         currentPage = page
-        volume.currentPage = page
-        if page == pageCount - 1 { volume.isFinished = true }
-        markOpened()
+        // The volume gets the page when the progress is saved, not on every page.
+        // Each change to a model wakes the library views under the reader, and
+        // with a large library their work makes scrolling stutter.
+        if page == pageCount - 1, !volume.isFinished { volume.isFinished = true }
         prefetch()
         scheduleSave()
     }
@@ -274,6 +275,9 @@ final class ReaderModel {
     /// Call on close and when the app goes to the background.
     func saveNow() {
         saveTask?.cancel()
+        // lastReadAt was set on open. Setting it again here would reorder the
+        // library under the reader on every save.
+        if volume.currentPage != currentPage { volume.currentPage = currentPage }
         try? volume.modelContext?.save()
     }
 

@@ -50,15 +50,21 @@ enum LibrarySort: String, CaseIterable, Identifiable {
         }
     }
 
-    func areInIncreasingOrder(_ a: Series, _ b: Series) -> Bool {
+    /// Reads each sort key once. A SwiftData property read is slow, and a
+    /// comparator reads two of them for every comparison.
+    func sorted(_ series: [Series]) -> [Series] {
         switch self {
         case .recent:
             // Never-read series follow, newest import first.
-            (a.lastReadAt ?? .distantPast, a.dateAdded) > (b.lastReadAt ?? .distantPast, b.dateAdded)
+            series.map { ($0, $0.lastReadAt ?? .distantPast, $0.dateAdded) }
+                .sorted { ($0.1, $0.2) > ($1.1, $1.2) }
+                .map(\.0)
         case .added:
-            a.dateAdded > b.dateAdded
+            series.map { ($0, $0.dateAdded) }.sorted { $0.1 > $1.1 }.map(\.0)
         case .title:
-            a.title.localizedStandardCompare(b.title) == .orderedAscending
+            series.map { ($0, $0.title) }
+                .sorted { $0.1.localizedStandardCompare($1.1) == .orderedAscending }
+                .map(\.0)
         }
     }
 }
@@ -87,8 +93,15 @@ extension Series {
 
     /// The series for the "Continue" card: the most recently read unfinished one.
     static func continueCandidate(in all: [Series]) -> Series? {
-        all.filter { $0.lastReadAt != nil && !$0.isFinished && $0.continueVolume != nil }
-            .max { ($0.lastReadAt ?? .distantPast) < ($1.lastReadAt ?? .distantPast) }
+        recentlyRead(all).first { !$0.isFinished && $0.continueVolume != nil }
+    }
+
+    /// Series that were read, newest first. The volume checks that follow are
+    /// slow, so callers stop at the first match instead of checking every series.
+    static func recentlyRead(_ all: [Series]) -> LazyMapSequence<[(Series, Date)], Series> {
+        all.compactMap { series in series.lastReadAt.map { (series, $0) } }
+            .sorted { $0.1 > $1.1 }
+            .lazy.map(\.0)
     }
 }
 

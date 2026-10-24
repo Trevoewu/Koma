@@ -24,12 +24,16 @@ struct LibraryView: View {
     private var isWide: Bool { sizeClass == .regular }
 
     var body: some View {
+        // Computed once per update: each one reads many SwiftData properties, and
+        // this view updates while the reader is open on top of it.
+        let hero = Series.continueCandidate(in: allSeries)
+        let heroVolume = hero?.continueVolume
         NavigationStack(path: $path) {
             Group {
                 if allSeries.isEmpty {
                     LibraryEmptyView { showsImporter = true }
                 } else {
-                    library
+                    library(hero: hero, heroVolume: heroVolume)
                 }
             }
             .background(ScreenBackground())
@@ -38,11 +42,10 @@ struct LibraryView: View {
             .libraryDestinations()
         }
         .importFlow(isPresented: $showsImporter)
-        .task(id: continueSeries?.continueVolume?.id) {
+        .task(id: heroVolume?.id) {
             continueIsWebtoon = false
-            guard let series = continueSeries, series.readingMode == nil,
-                  let volume = series.continueVolume else { return }
-            continueIsWebtoon = await WebtoonDetector.isWebtoon(volume)
+            guard let hero, hero.readingMode == nil, let heroVolume else { return }
+            continueIsWebtoon = await WebtoonDetector.isWebtoon(heroVolume)
         }
         .sheet(isPresented: $showsSettings) { SettingsView() }
         .fullScreenCover(item: $readingVolume) { ReaderView(volume: $0) }
@@ -58,12 +61,14 @@ struct LibraryView: View {
 
     // MARK: Content
 
-    private var library: some View {
-        ScrollView {
+    private func library(hero: Series?, heroVolume: Volume?) -> some View {
+        let shown = visibleSeries
+        let recent = isWide && filter == .all ? recentVolumes(excluding: hero) : []
+        return ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 filterChips
 
-                if showsContinueCard, let series = continueSeries, let volume = series.continueVolume {
+                if showsContinueCard, let series = hero, let volume = heroVolume {
                     ContinueCard(series: series, volume: volume,
                                  readingMode: series.displayReadingMode(default: defaultMode,
                                                                          isWebtoon: continueIsWebtoon),
@@ -73,13 +78,13 @@ struct LibraryView: View {
                         .padding(.top, isWide ? 22 : 18)
                 }
 
-                if isWide, filter == .all, !recentVolumes.isEmpty {
-                    recentlyRead
+                if !recent.isEmpty {
+                    recentlyRead(recent)
                         .padding(.top, 30)
                 }
 
                 SectionHeader(title: "All Series", systemImage: "square.grid.2x2", isWide: isWide) {
-                    Text(visibleSeries.count, format: .number)
+                    Text(shown.count, format: .number)
                         .font(isWide ? .callout : .subheadline)
                         .foregroundStyle(Theme.tertiaryText)
                     sortMenu
@@ -88,14 +93,14 @@ struct LibraryView: View {
                 .padding(.top, isWide ? 30 : 26)
                 .padding(.bottom, isWide ? 14 : 8)
 
-                if visibleSeries.isEmpty {
+                if shown.isEmpty {
                     Text(filter.emptyMessage)
                         .font(.callout)
                         .foregroundStyle(Theme.secondaryText)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 48)
                 } else {
-                    SeriesGrid(series: visibleSeries, isWide: isWide) { seriesToDelete = $0 }
+                    SeriesGrid(series: shown, isWide: isWide) { seriesToDelete = $0 }
                 }
             }
             .padding(.horizontal, isWide ? 40 : 16)
@@ -121,12 +126,12 @@ struct LibraryView: View {
         .scrollClipDisabled()
     }
 
-    private var recentlyRead: some View {
+    private func recentlyRead(_ volumes: [Volume]) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             SectionHeader(title: "Recently Read", systemImage: "clock.arrow.circlepath", isWide: true)
                 .padding(.horizontal, 4)
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 18), count: 3), spacing: 18) {
-                ForEach(recentVolumes) { volume in
+                ForEach(volumes) { volume in
                     RecentlyReadCard(volume: volume) { readingVolume = volume }
                 }
             }
@@ -167,22 +172,17 @@ struct LibraryView: View {
     // MARK: Data
 
     private var visibleSeries: [Series] {
-        allSeries.filter(filter.matches).sorted(by: sort.areInIncreasingOrder)
+        sort.sorted(filter == .all ? allSeries : allSeries.filter(filter.matches))
     }
-
-    private var continueSeries: Series? { Series.continueCandidate(in: allSeries) }
 
     private var showsContinueCard: Bool { filter == .all || filter == .reading }
 
     /// iPad "Recently Read": the next three series after the one in the Continue card.
-    private var recentVolumes: [Volume] {
-        let hero = continueSeries
-        return allSeries
-            .filter { $0.lastReadAt != nil && $0 !== hero }
-            .sorted { ($0.lastReadAt ?? .distantPast) > ($1.lastReadAt ?? .distantPast) }
+    private func recentVolumes(excluding hero: Series?) -> [Volume] {
+        Array(Series.recentlyRead(allSeries)
+            .filter { $0 !== hero }
             .compactMap(\.continueVolume)
-            .prefix(3)
-            .map { $0 }
+            .prefix(3))
     }
 
     // MARK: Delete

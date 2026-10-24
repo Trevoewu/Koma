@@ -83,5 +83,29 @@ enum SampleData {
         }
         try? context.save()
     }
+
+    /// A big library for speed tests: 150 series × 7 volumes × 180 pages.
+    /// The page files do not exist, so it takes no disk space (covers are placeholders).
+    static func insertLarge(into context: ModelContext, seriesCount: Int = 150, volumesPerSeries: Int = 7) {
+        let pages = (1...180).map { String(format: "%04d.jpg", $0) }
+        for s in 0..<seriesCount {
+            let series = Series(title: "Test Series \(s + 1)", author: "Author \(s % 40 + 1)")
+            series.dateAdded = .now.addingTimeInterval(-Double(s) * 3600)
+            context.insert(series)
+            for n in 1...volumesPerSeries {
+                let volume = Volume(title: "Test Series \(s + 1) v\(n)", number: Double(n), pageFiles: pages,
+                                    fileSize: 30_000_000)
+                context.insert(volume)
+                volume.series = series
+                if s % 3 == 0, n <= 3 {
+                    volume.isFinished = n < 3
+                    volume.currentPage = n < 3 ? 179 : 60
+                    volume.lastReadAt = .now.addingTimeInterval(-Double(s * 10 + n) * 600)
+                }
+            }
+            series.lastReadAt = (series.volumes ?? []).compactMap(\.lastReadAt).max()
+        }
+        try? context.save()
+    }
 }
 #endif

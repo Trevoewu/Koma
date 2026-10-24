@@ -208,6 +208,10 @@ struct SettingsView: View {
                 SampleData.insert(into: context)
             }
             .buttonStyle(.glass)
+            Button("Add 1,050 Test Volumes", systemImage: "square.stack.3d.up") {
+                SampleData.insertLarge(into: context)
+            }
+            .buttonStyle(.glass)
             Button("Delete All Series", systemImage: "trash", role: .destructive) {
                 for series in allSeries { LibraryActions.delete(series, in: context) }
             }
