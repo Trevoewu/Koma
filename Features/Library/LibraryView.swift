@@ -13,7 +13,7 @@ struct LibraryView: View {
     @AppStorage(SettingsKey.defaultReadingMode) private var defaultMode: ReadingMode = .rightToLeft
 
     @State private var filter: LibraryFilter = .all
-    @State private var path: [Series] = []
+    @State private var path = NavigationPath()
     @State private var showsImporter = false
     @State private var showsSettings = false
     @State private var readingVolume: Volume?

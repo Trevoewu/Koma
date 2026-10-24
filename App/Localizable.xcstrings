@@ -765,7 +765,8 @@
             "value": "続きから · %1$@ %2$lld ページ"
           }
         }
-      }
+      },
+      "extractionState": "stale"
     },
     "Could Not Import": {
       "localizations": {
@@ -1350,28 +1351,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "履歴"
-          }
-        }
-      }
-    },
-    "How to add ZIP and CBZ files": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "如何添加 ZIP 和 CBZ 文件"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "如何加入 ZIP 和 CBZ 檔案"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ZIP・CBZ ファイルの追加方法"
           }
         }
       }
@@ -2211,28 +2190,6 @@
         }
       }
     },
-    "Opens the Files app. Share a ZIP or CBZ file to Koma from there.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开“文件”App。在那里将 ZIP 或 CBZ 文件共享到 Koma。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打開「檔案」App。在那裡將 ZIP 或 CBZ 檔案分享到 Koma。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "「ファイル」App を開きます。そこから ZIP・CBZ ファイルを Koma に共有してください。"
-          }
-        }
-      }
-    },
     "Page": {
       "localizations": {
         "zh-Hans": {
@@ -2457,7 +2414,8 @@
             "value": "もう一度読む · %@"
           }
         }
-      }
+      },
+      "extractionState": "stale"
     },
     "Reading": {
       "localizations": {
@@ -2745,28 +2703,6 @@
         }
       }
     },
-    "Send ZIP or CBZ files with AirDrop. Koma opens and imports them.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用隔空投送发送 ZIP 或 CBZ 文件，Koma 会打开并导入它们。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用 AirDrop 傳送 ZIP 或 CBZ 檔案，Koma 會打開並匯入它們。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "AirDrop で ZIP・CBZ ファイルを送ると、Koma が開いて読み込みます。"
-          }
-        }
-      }
-    },
     "Settings": {
       "localizations": {
         "zh-Hans": {
@@ -2941,7 +2877,8 @@
             "value": "読み始める · %@"
           }
         }
-      }
+      },
+      "extractionState": "stale"
     },
     "Stop Import": {
       "localizations": {
@@ -2983,28 +2920,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "ストレージ"
-          }
-        }
-      }
-    },
-    "Supports ZIP and CBZ": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "支持 ZIP 和 CBZ"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "支援 ZIP 和 CBZ"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ZIP と CBZ に対応"
           }
         }
       }
@@ -3115,28 +3030,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "縦長のページは縦スクロールで開きます"
-          }
-        }
-      }
-    },
-    "Tap + in the library and choose one or more ZIP or CBZ files.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在书架中轻点 +，选择一个或多个 ZIP 或 CBZ 文件。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在書架中點一下 +，選擇一個或多個 ZIP 或 CBZ 檔案。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ライブラリで + をタップし、ZIP・CBZ ファイルを選びます（複数可）。"
           }
         }
       }
@@ -3335,28 +3228,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "デバイスの空き容量が足りません。"
-          }
-        }
-      }
-    },
-    "This file is not a ZIP or CBZ archive, or it is protected with a password.": {
-      "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此文件不是 ZIP 或 CBZ 压缩包，或者设有密码。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "此檔案不是 ZIP 或 CBZ 壓縮檔，或者設有密碼。"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このファイルは ZIP・CBZ アーカイブではないか、パスワードで保護されています。"
           }
         }
       }
@@ -3992,6 +3863,204 @@
           "stringUnit": {
             "state": "translated",
             "value": "重新閱讀"
+          }
+        }
+      }
+    },
+    "Shows all series with this tag": {
+      "localizations": {
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このタグのシリーズをすべて表示"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示带有此标签的所有系列"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示帶有此標籤的所有系列"
+          }
+        }
+      }
+    },
+    "Opens the Files app. Share a ZIP, CBZ or EPUB file to Koma from there.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“文件”App。在那里将 ZIP、CBZ 或 EPUB 文件共享到 Koma。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開「檔案」App。在那裡將 ZIP、CBZ 或 EPUB 檔案分享到 Koma。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「ファイル」App を開きます。そこから ZIP・CBZ・EPUB ファイルを Koma に共有してください。"
+          }
+        }
+      }
+    },
+    "Supports ZIP, CBZ and EPUB": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持 ZIP、CBZ 和 EPUB"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支援 ZIP、CBZ 和 EPUB"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ZIP・CBZ・EPUB に対応"
+          }
+        }
+      }
+    },
+    "Tap + in the library and choose one or more ZIP, CBZ or EPUB files.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在书架中轻点 +，选择一个或多个 ZIP、CBZ 或 EPUB 文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在書架中點一下 +，選擇一個或多個 ZIP、CBZ 或 EPUB 檔案。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ライブラリで + をタップし、ZIP・CBZ・EPUB ファイルを選びます（複数可）。"
+          }
+        }
+      }
+    },
+    "Send ZIP, CBZ or EPUB files with AirDrop. Koma opens and imports them.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用隔空投送发送 ZIP、CBZ 或 EPUB 文件，Koma 会打开并导入它们。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用 AirDrop 傳送 ZIP、CBZ 或 EPUB 檔案，Koma 會打開並匯入它們。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirDrop で ZIP・CBZ・EPUB ファイルを送ると、Koma が開いて読み込みます。"
+          }
+        }
+      }
+    },
+    "How to add ZIP, CBZ and EPUB files": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如何添加 ZIP、CBZ 和 EPUB 文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如何加入 ZIP、CBZ 和 EPUB 檔案"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ZIP・CBZ・EPUB ファイルの追加方法"
+          }
+        }
+      }
+    },
+    "This file is not a ZIP, CBZ or EPUB file, or it is protected with a password.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此文件不是 ZIP、CBZ 或 EPUB 文件，或者设有密码。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此檔案不是 ZIP、CBZ 或 EPUB 檔案，或者設有密碼。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このファイルは ZIP・CBZ・EPUB ファイルではないか、パスワードで保護されています。"
+          }
+        }
+      }
+    },
+    "This EPUB is a text book. Koma reads comic EPUBs, which have one image per page.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此 EPUB 是文字书。Koma 只能阅读每页一张图片的漫画 EPUB。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此 EPUB 是文字書。Koma 只能閱讀每頁一張圖片的漫畫 EPUB。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この EPUB は文字の本です。Koma は 1 ページに 1 枚の画像がある漫画 EPUB を読めます。"
+          }
+        }
+      }
+    },
+    "Comic EPUBs with one image per page work. Text books, such as novels, cannot be imported.": {
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支持每页一张图片的漫画 EPUB。小说等文字书无法导入。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支援每頁一張圖片的漫畫 EPUB。小說等文字書無法匯入。"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 ページに 1 枚の画像がある漫画 EPUB に対応しています。小説などの文字の本は読み込めません。"
           }
         }
       }

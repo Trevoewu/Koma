@@ -59,6 +59,7 @@ struct VerticalReader: View {
     @State private var contentHeight: CGFloat = 0
     /// Top edge of each page that is laid out now, in content coordinates.
     @State private var pageTops: [Int: CGFloat] = [:]
+    @State private var animator = ScrollAnimator()
 
     var body: some View {
         ScrollView(.vertical) {
@@ -96,16 +97,23 @@ struct VerticalReader: View {
             contentHeight = metrics.content
             updateCurrentPage()
         }
+        .onScrollPhaseChange { _, phase in
+            // A finger on the page wins over a running tap scroll.
+            if phase == .interacting { animator.stop() }
+        }
         .onTapGesture(coordinateSpace: .local) { location in
             handleTap(atX: location.x)
         }
         .onChange(of: model.verticalScrollRequest) { _, request in
-            if let request {
-                withAnimation(request.animated && !reduceMotion ? .smooth(duration: 0.35) : nil) {
-                    position.scrollTo(id: request.page, anchor: .top)
-                }
+            guard let request else { return }
+            if request.animated, !reduceMotion, let top = pageTops[request.page] {
+                animateScroll(to: top)
+            } else {
+                animator.stop()
+                position.scrollTo(id: request.page, anchor: .top)
             }
         }
+        .onDisappear { animator.stop() }
         // A new scroll view starts at the top, so scroll to the saved page after
         // the first layout (on open and on a mode change).
         .task(id: model.layoutID) {
@@ -134,15 +142,34 @@ struct VerticalReader: View {
         }
     }
 
+    /// Quick taps add up: the next step starts from the end of the running one.
     private func scrollByScreen(_ direction: CGFloat) {
-        let maxOffset = max(contentHeight - viewportHeight, 0)
-        let target = min(max(offset + direction * viewportHeight * 0.85, 0), maxOffset)
+        let base = animator.target ?? offset
+        let target = clampedOffset(base + direction * viewportHeight * 0.85)
         guard abs(target - offset) > 1 else { return }
-        withAnimation(reduceMotion ? nil : .smooth(duration: 0.35)) {
-            position.scrollTo(y: target)
+        withAnimation(.snappy(duration: 0.25)) {
             model.controlsVisible = false
             model.showsModeMenu = false
         }
+        animateScroll(to: target)
+    }
+
+    /// Not `withAnimation { position.scrollTo(...) }`: SwiftUI then lays out the lazy
+    /// stack only for the end position, and a page that is still leaving the screen
+    /// goes black during the animation. Small steps without animation look like a
+    /// normal scroll to the stack, so every visible page stays drawn.
+    private func animateScroll(to y: CGFloat) {
+        let target = clampedOffset(y)
+        if reduceMotion {
+            animator.stop()
+            position.scrollTo(y: target)
+            return
+        }
+        animator.run(from: offset, to: target) { position.scrollTo(y: $0) }
+    }
+
+    private func clampedOffset(_ y: CGFloat) -> CGFloat {
+        min(max(y, 0), max(contentHeight - viewportHeight, 0))
     }
 
     /// The current page is the one that covers the line a quarter down the screen,
@@ -158,6 +185,47 @@ struct VerticalReader: View {
               page != model.verticalPosition
         else { return }
         model.verticalPageChanged(to: page)
+    }
+}
+
+/// Runs a scroll animation one display frame at a time (ease-out, 0.35 s).
+private final class ScrollAnimator: NSObject {
+    /// The end of the running animation, nil when idle.
+    private(set) var target: CGFloat?
+    private var start: CGFloat = 0
+    private var startTime: CFTimeInterval?
+    private var link: CADisplayLink?
+    private var apply: ((CGFloat) -> Void)?
+    private let duration: CFTimeInterval = 0.35
+
+    func run(from: CGFloat, to: CGFloat, apply: @escaping (CGFloat) -> Void) {
+        stop()
+        start = from
+        target = to
+        self.apply = apply
+        let link = CADisplayLink(target: self, selector: #selector(step))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
+        link.add(to: .main, forMode: .common)
+        self.link = link
+    }
+
+    /// Also breaks the retain cycle: the display link holds its target.
+    func stop() {
+        link?.invalidate()
+        link = nil
+        startTime = nil
+        target = nil
+        apply = nil
+    }
+
+    @objc private func step(_ link: CADisplayLink) {
+        guard let target else { return stop() }
+        let begin = startTime ?? link.timestamp
+        startTime = begin
+        let t = min((link.targetTimestamp - begin) / duration, 1)
+        let eased = 1 - pow(1 - t, 3)
+        apply?(start + (target - start) * eased)
+        if t >= 1 { stop() }
     }
 }
 

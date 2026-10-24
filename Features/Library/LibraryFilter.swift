@@ -94,10 +94,12 @@ extension Series {
 
 extension Volume {
     /// "Vol. 3 · Page 42 of 186". A volume named like its series shows only the page.
+    /// A long name (an EPUB title, a file name) is cut, so the page always shows.
     var progressText: String {
         let page = String(localized: "Page \(currentPage + 1) of \(pageCount)")
-        if let series, displayName.caseInsensitiveCompare(series.title) == .orderedSame { return page }
-        return "\(displayName) · \(page)"
+        guard let name = nameBesideSeries() else { return page }
+        let shown = name.count > 24 ? name.prefix(23) + "…" : name
+        return "\(shown) · \(page)"
     }
 }
 

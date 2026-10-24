@@ -166,9 +166,41 @@ struct AuthorRoute: Hashable {
     let name: String
 }
 
+/// Navigation value for "all series with this tag".
+struct TagRoute: Hashable {
+    let name: String
+}
+
 /// All series by an author. Series with several authors ("A, B") match each name.
 struct AuthorSeriesView: View {
     let route: AuthorRoute
+
+    var body: some View {
+        let names = Set(route.name.split(separator: ",").map {
+            TitleNormalizer.key($0.trimmingCharacters(in: .whitespaces))
+        })
+        FilteredSeriesView(title: route.name) { series in
+            series.authorNames.contains { names.contains(TitleNormalizer.key($0)) }
+        }
+    }
+}
+
+/// All series with a tag. Tag names match like titles (case and width do not matter).
+struct TagSeriesView: View {
+    let route: TagRoute
+
+    var body: some View {
+        let key = TitleNormalizer.key(route.name)
+        FilteredSeriesView(title: route.name) { series in
+            (series.tags ?? []).contains { TitleNormalizer.key($0.name) == key }
+        }
+    }
+}
+
+/// A series grid with a title, for the author and tag pages.
+private struct FilteredSeriesView: View {
+    let title: String
+    let matches: (Series) -> Bool
 
     @Environment(\.modelContext) private var context
     @Environment(\.horizontalSizeClass) private var sizeClass
@@ -177,25 +209,16 @@ struct AuthorSeriesView: View {
 
     var body: some View {
         ScrollView {
-            SeriesGrid(series: matching, isWide: sizeClass == .regular) { seriesToDelete = $0 }
+            SeriesGrid(series: allSeries.filter(matches), isWide: sizeClass == .regular) { seriesToDelete = $0 }
                 .padding(.horizontal, sizeClass == .regular ? 40 : 16)
                 .padding(.vertical, 8)
         }
         .background(ScreenBackground())
-        .navigationTitle(route.name)
+        .navigationTitle(title)
         .confirmationDialog("Delete Series?", isPresented: deleteBinding, presenting: seriesToDelete) { series in
             Button("Delete Series", role: .destructive) { LibraryActions.delete(series, in: context) }
         } message: { series in
             Text("This removes \(series.volumeCount) volumes and their pages from this device.")
-        }
-    }
-
-    private var matching: [Series] {
-        let names = Set(route.name.split(separator: ",").map {
-            TitleNormalizer.key($0.trimmingCharacters(in: .whitespaces))
-        })
-        return allSeries.filter { series in
-            series.authorNames.contains { names.contains(TitleNormalizer.key($0)) }
         }
     }
 
@@ -205,9 +228,10 @@ struct AuthorSeriesView: View {
 }
 
 extension View {
-    /// The pages a library navigation stack can push: a series and an author.
+    /// The pages a library navigation stack can push: a series, an author and a tag.
     func libraryDestinations() -> some View {
         navigationDestination(for: Series.self) { SeriesDetailView(series: $0) }
             .navigationDestination(for: AuthorRoute.self) { AuthorSeriesView(route: $0) }
+            .navigationDestination(for: TagRoute.self) { TagSeriesView(route: $0) }
     }
 }

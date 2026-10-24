@@ -141,12 +141,13 @@ struct ReaderControls: View {
 
     private var titleStack: some View {
         let seriesTitle = model.volume.series?.title ?? model.volume.title
-        let volumeName = model.volume.longDisplayName
+        let volumeName = model.volume.series == nil ? nil : model.volume.nameBesideSeries(long: true)
         return VStack(spacing: 1) {
             Text(seriesTitle)
                 .font(.system(size: isWide ? 15 : 14, weight: .semibold))
-            // A volume without a number is named after its file, often the same as the series.
-            if volumeName.caseInsensitiveCompare(seriesTitle) != .orderedSame {
+            // A volume without a number is named after its file or book title,
+            // which often repeats the series title.
+            if let volumeName {
                 Text(volumeName)
                     .font(.system(size: isWide ? 12 : 11))
                     .foregroundStyle(Theme.Reader.secondaryText)

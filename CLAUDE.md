@@ -1,12 +1,14 @@
 # Koma (iOS) — project guide for Claude Code
 
+NOTES: Avoid unnecessary secondary labels and descriptions. Let the layout do the explaining.
+
 ## Communication
 - Explain in Simplified Technical English (about 80% ASD-STE100): short sentences,
   simple words, active voice, one instruction per sentence.
 
 ## What the app is
 A paid iOS/iPadOS app that reads manga and comics the user already has on the device.
-The user imports `.zip` / `.cbz` files. The app extracts the pages, groups volumes into
+The user imports `.zip` / `.cbz` / `.epub` files (EPUB: comic EPUBs with page images only). The app extracts the pages, groups volumes into
 series, and gives a clean reader with three modes.
 
 - Business model: **paid up front**. No in-app purchases, no ads, no account, no server.
@@ -95,12 +97,12 @@ SwiftData stores only the UUID, never a full path (the container path can change
    volumes); Help & Feedback; About.
 
 ## Version 1 scope
-In: import (picker, Files app "Open in", share sheet, AirDrop), library with series
+In: import of ZIP/CBZ/EPUB (picker, Files app "Open in", share sheet, AirDrop), library with series
 grouping, covers, filters, sort, delete; reader with 3 modes, zoom, saved progress per
 volume, mode saved per series, iPad two-page spread; series detail with author and tags;
 settings; first launch; 4 languages.
 
-Out (later): RAR/7z/PDF/EPUB, plain image folders, iCloud sync, bookmarks list,
+Out (later): RAR/7z/PDF, text EPUBs, plain image folders, iCloud sync, bookmarks list,
 collections, network/NAS sources, auto-split of double pages.
 
 ## Build plan
@@ -142,5 +144,11 @@ Each step must build and run before the next step starts.
   links the models. On any error, delete that volume's folder. One bad file must not stop
   the other files in a multi-file import. Show a summary of failures at the end.
 - Show import progress (files done / total).
+- **EPUB** (`EPUBPackage`): a zip with `META-INF/container.xml`. Pages = the images of the
+  spine documents (`<img src>`, SVG `<image href>`) in spine order, without duplicates.
+  Metadata after ComicInfo: `dc:title` (parsed like a file name), `dc:creator`, `dc:subject`,
+  `dc:description`, calibre:series / `belongs-to-collection`, spine
+  `page-progression-direction="rtl"`. Text books (most spine documents without images, or much
+  text) fail with `ImportError.textBook`.
 - Test with: CJK file names, GBK-encoded zips, nested folders inside the zip, zips with
   non-image files, an empty zip, a corrupt zip, a 500 MB+ zip.

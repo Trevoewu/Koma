@@ -70,6 +70,25 @@ extension Volume {
         return title
     }
 
+    /// The name to show under or after the series title, without repeating it:
+    /// "Vol. 3", "Extras" for "Tidewater Saints Extras", and nil for a title that
+    /// is only the series title plus notes in brackets, like
+    /// "一只猫的存在主义思考 (一只猫丧中带…) (未读·文艺家)".
+    func nameBesideSeries(long: Bool = false) -> String? {
+        if number != nil { return long ? longDisplayName : displayName }
+        guard let seriesTitle = series?.title, !seriesTitle.isEmpty,
+              let match = title.range(of: seriesTitle, options: [.anchored, .caseInsensitive, .widthInsensitive])
+        else { return title }
+        let rest = String(title[match.upperBound...])
+        let withoutNotes = rest.replacing(#/[(\[（【][^)\]）】]*[)\]）】]/#, with: "")
+        if withoutNotes.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters)).isEmpty {
+            return nil
+        }
+        // "Tidewater Saints - Extras" → "Extras".
+        let separators = CharacterSet.whitespacesAndNewlines.union(CharacterSet(charactersIn: "-–—:：·_,，"))
+        return rest.trimmingCharacters(in: separators)
+    }
+
     // MARK: Files on disk
 
     var folderURL: URL { LibraryPaths.volumeFolder(for: id) }

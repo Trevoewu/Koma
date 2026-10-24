@@ -3,7 +3,7 @@ import SwiftData
 
 /// The library with no series yet (the "First launch" board): glass icon tile,
 /// "Your Shelf Starts Here", one primary "Import Files", glass "Open from Files App",
-/// "Supports ZIP and CBZ", "View Import Guide" and the legal line.
+/// "Supports ZIP, CBZ and EPUB", "View Import Guide" and the legal line.
 struct LibraryEmptyView: View {
     var onImport: () -> Void
 
@@ -44,9 +44,9 @@ struct LibraryEmptyView: View {
                 .buttonStyle(.glass)
                 .controlSize(.large)
                 .padding(.top, 12)
-                .accessibilityHint("Opens the Files app. Share a ZIP or CBZ file to Koma from there.")
+                .accessibilityHint("Opens the Files app. Share a ZIP, CBZ or EPUB file to Koma from there.")
 
-                Text("Supports ZIP and CBZ")
+                Text("Supports ZIP, CBZ and EPUB")
                     .font(.subheadline)
                     .foregroundStyle(Theme.tertiaryText)
                     .padding(.top, 20)
@@ -86,7 +86,7 @@ enum FilesApp {
     static let url = URL(string: "shareddocuments://")!
 }
 
-/// How to get ZIP and CBZ files into Koma. Opened from the first-launch screen and Settings.
+/// How to get ZIP, CBZ and EPUB files into Koma. Opened from the first-launch screen and Settings.
 struct ImportGuideView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -98,13 +98,13 @@ struct ImportGuideView: View {
                         Text("Three Ways to Import").font(.system(size: 20, weight: .bold))
                         step(icon: "plus",
                              title: "Import Files",
-                             text: "Tap + in the library and choose one or more ZIP or CBZ files.")
+                             text: "Tap + in the library and choose one or more ZIP, CBZ or EPUB files.")
                         step(icon: "square.and.arrow.up",
                              title: "Share from Another App",
                              text: "In Files, Mail or Safari downloads, touch and hold a file, tap Share, then tap Koma.")
                         step(icon: "airplayaudio",
                              title: "AirDrop from a Mac",
-                             text: "Send ZIP or CBZ files with AirDrop. Koma opens and imports them.")
+                             text: "Send ZIP, CBZ or EPUB files with AirDrop. Koma opens and imports them.")
                     }
                     .sectionCard()
 
@@ -112,6 +112,7 @@ struct ImportGuideView: View {
                         Text("Tips").font(.system(size: 20, weight: .bold))
                         tip("Volumes of one series group together when their file names share a title, like “Tidewater Saints v01.cbz” and “Tidewater Saints v02.cbz”.")
                         tip("If a file has ComicInfo.xml, Koma uses its title, author, tags and reading direction.")
+                        tip("Comic EPUBs with one image per page work. Text books, such as novels, cannot be imported.")
                         tip("Pages can be JPG, PNG, WebP, GIF, HEIC or AVIF. Animated GIF, APNG and WebP pages play.")
                         tip("Everything stays on this device. Koma has no account and sends nothing.")
                     }

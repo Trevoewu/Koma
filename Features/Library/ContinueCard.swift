@@ -41,6 +41,7 @@ struct ContinueCard: View {
                 Text(volume.progressText)
                     .font(.footnote)
                     .foregroundStyle(Theme.bodyText)
+                    .lineLimit(2)
                 ReadingProgressBar(value: volume.progress)
                     .padding(.top, 2)
 

@@ -11,7 +11,7 @@ extension UTType {
     /// The types the picker accepts. If another app on the device declares .cbz
     /// too, the system may resolve files to that app's type, so we add it.
     static var importable: [UTType] {
-        var types: [UTType] = [.zip, .cbz]
+        var types: [UTType] = [.zip, .cbz, .epub]
         if let other = UTType(filenameExtension: "cbz"), !types.contains(other) {
             types.append(other)
         }

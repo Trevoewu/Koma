@@ -21,15 +21,17 @@ nonisolated enum ImportError: LocalizedError, Sendable {
     case unreadable      // not a zip, or encrypted
     case damaged         // the zip opens, but its data is broken
     case noImages
+    case textBook        // an EPUB with text pages, not page images
     case noSpace
     case writeFailed
     case cancelled
 
     var errorDescription: String? {
         switch self {
-        case .unreadable:  String(localized: "This file is not a ZIP or CBZ archive, or it is protected with a password.")
+        case .unreadable:  String(localized: "This file is not a ZIP, CBZ or EPUB file, or it is protected with a password.")
         case .damaged:     String(localized: "The archive is damaged. Some pages could not be read.")
         case .noImages:    String(localized: "The archive has no pages (JPG, PNG, WebP, GIF, HEIC or AVIF).")
+        case .textBook:    String(localized: "This EPUB is a text book. Koma reads comic EPUBs, which have one image per page.")
         case .noSpace:     String(localized: "There is not enough free storage on this device.")
         case .writeFailed: String(localized: "The pages could not be saved.")
         case .cancelled:   String(localized: "The import was stopped.")
@@ -37,7 +39,10 @@ nonisolated enum ImportError: LocalizedError, Sendable {
     }
 }
 
-/// Unzips one archive into the library folder. Runs off the main actor.
+/// Unzips one archive (ZIP, CBZ or EPUB) into the library folder. Runs off the main actor.
+///
+/// An EPUB is a zip too. Its pages come in spine order, not in name order,
+/// and its package file gives the metadata (after ComicInfo.xml).
 ///
 /// It never uses the paths from the zip to write files. Pages get our own
 /// names (0001.jpg, 0002.png…), so a "../../" entry cannot escape the folder.
@@ -69,9 +74,18 @@ actor ArchiveImporter {
         let decoder = ArchiveNameDecoder(entries: entries)
         let named = entries.map { (entry: $0, name: decoder.name(of: $0)) }
 
-        let pages = named
-            .filter { Self.isPage($0.name) }
-            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        let epub = epubPackage(in: named, archive: archive)
+        if epub?.isTextBook == true { throw ImportError.textBook }
+
+        let pages: [(entry: Entry, name: String)]
+        if let epub {
+            let byName = Dictionary(named.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+            pages = epub.pagePaths.compactMap { byName[$0] }.filter { Self.isPage($0.name) }
+        } else {
+            pages = named
+                .filter { Self.isPage($0.name) }
+                .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        }
         guard !pages.isEmpty else { throw ImportError.noImages }
 
         let info = comicInfo(in: named, archive: archive)
@@ -97,18 +111,25 @@ actor ArchiveImporter {
                   to: LibraryPaths.coverURL(for: id))
 
         let fileTitle = url.deletingPathExtension().lastPathComponent
-        let parsed = FileNameParser.parse(url.lastPathComponent)
+        let parsedFile = FileNameParser.parse(url.lastPathComponent)
+        // An EPUB title is often cleaner than its file name (stores cut long names).
+        let parsedTitle = epub?.title.map(FileNameParser.parse)
+        var tags: [String] = []
+        for tag in (info?.tagNames ?? []) + (epub?.subjects ?? []) + FileNameParser.tags(in: url.lastPathComponent)
+        where !tags.contains(where: { $0.caseInsensitiveCompare(tag) == .orderedSame }) {
+            tags.append(tag)
+        }
         return ImportedVolume(
             id: id,
-            volumeTitle: info?.volumeTitle ?? fileTitle,
-            seriesTitle: info?.seriesTitle ?? parsed.seriesTitle,
-            number: info?.volumeNumber ?? parsed.number,
+            volumeTitle: info?.volumeTitle ?? epub?.title ?? fileTitle,
+            seriesTitle: info?.seriesTitle ?? epub?.seriesTitle ?? parsedTitle?.seriesTitle ?? parsedFile.seriesTitle,
+            number: info?.volumeNumber ?? epub?.seriesIndex ?? parsedTitle?.number ?? parsedFile.number,
             pageFiles: pageFiles,
             fileSize: fileSize,
-            author: info?.author,
-            summary: info?.summary.nonEmpty,
-            tags: (info?.tagNames ?? []) + FileNameParser.tags(in: url.lastPathComponent),
-            isRightToLeft: info?.isRightToLeft ?? false
+            author: info?.author ?? epub?.author,
+            summary: info?.summary.nonEmpty ?? epub?.summary,
+            tags: tags,
+            isRightToLeft: (info?.isRightToLeft ?? false) || (epub?.isRightToLeft ?? false)
         )
     }
 
@@ -136,6 +157,20 @@ actor ArchiveImporter {
         var data = Data()
         guard (try? archive.extract(best.entry, consumer: { data.append($0) })) != nil else { return nil }
         return ComicInfo(data: data)
+    }
+
+    /// The EPUB package, if the archive has META-INF/container.xml.
+    /// Reads only small files (the package and the page documents).
+    private func epubPackage(in entries: [(entry: Entry, name: String)], archive: Archive) -> EPUBPackage? {
+        guard entries.contains(where: { $0.name.caseInsensitiveCompare(EPUBPackage.containerPath) == .orderedSame })
+        else { return nil }
+        let byName = Dictionary(entries.map { ($0.name, $0.entry) }, uniquingKeysWith: { first, _ in first })
+        return EPUBPackage.read(names: entries.map(\.name)) { name in
+            guard let entry = byName[name], entry.uncompressedSize < 4_000_000 else { return nil }
+            var data = Data()
+            guard (try? archive.extract(entry, consumer: { data.append($0) })) != nil else { return nil }
+            return data
+        }
     }
 
     /// cover.jpg from the first page that decodes. No cover is not an error:

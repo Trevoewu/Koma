@@ -3,7 +3,7 @@ import SwiftData
 
 /// The series page (the Series board): background tinted with the cover color,
 /// centered cover, title, author (tap → other series by this author), tags with
-/// a dashed "+ Tag" chip, "8 volumes · 1412 pages · Right to Left", one white
+/// a dashed "+ Tag" chip (tap a tag → all series with it), "8 volumes · 1412 pages · Right to Left", one white
 /// Continue button, and the volume grid (finished = dimmed + check, current = progress bar).
 struct SeriesDetailView: View {
     let series: Series
@@ -139,7 +139,17 @@ struct SeriesDetailView: View {
 
     private var tags: some View {
         FlowLayout(spacing: 8) {
-            ForEach(series.sortedTagNames, id: \.self) { TagChip(name: $0) }
+            ForEach(series.sortedTagNames, id: \.self) { name in
+                NavigationLink(value: TagRoute(name: name)) {
+                    // 44 pt touch target; the layout keeps the 30 pt chip.
+                    TagChip(name: name)
+                        .padding(.vertical, 7)
+                        .contentShape(.rect)
+                        .padding(.vertical, -7)
+                }
+                .buttonStyle(.plain)
+                    .accessibilityHint("Shows all series with this tag")
+            }
             AddTagChip { showsAddTag = true }
         }
         .padding(.horizontal, 8)

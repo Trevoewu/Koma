@@ -169,7 +169,7 @@ struct SettingsView: View {
             sectionTitle(LocalizedStringResource(stringLiteral: "Help & Feedback"))
             Button { showsGuide = true } label: {
                 SettingsRow(systemImage: "questionmark", title: "Import Guide",
-                            subtitle: Text("How to add ZIP and CBZ files")) { chevron }
+                            subtitle: Text("How to add ZIP, CBZ and EPUB files")) { chevron }
             }
             .buttonStyle(.plain)
             if let url = AppInfo.feedbackURL {

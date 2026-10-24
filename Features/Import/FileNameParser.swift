@@ -16,7 +16,7 @@ nonisolated enum FileNameParser {
     static func parse(_ name: String) -> Result {
         var base = name
         let ext = (name as NSString).pathExtension.lowercased()
-        if ["zip", "cbz"].contains(ext) { base = (name as NSString).deletingPathExtension }
+        if ["zip", "cbz", "epub"].contains(ext) { base = (name as NSString).deletingPathExtension }
         base = halfWidthDigits(base).replacingOccurrences(of: "_", with: " ")
 
         // 1. An explicit volume marker anywhere, also inside brackets: "[Vol.03]".
