@@ -42,6 +42,7 @@ struct LibraryLinker {
 
         let volume = Volume(title: imported.volumeTitle, number: imported.number,
                             pageFiles: imported.pageFiles, fileSize: imported.fileSize)
+        volume.filenameTagsExtracted = true
         volume.id = imported.id   // Must match the folder on disk.
         // A series the user ordered by hand gets new volumes at the end.
         if let last = (series.volumes ?? []).compactMap(\.sortIndex).max() {

@@ -32,6 +32,27 @@ enum SeriesActions {
         try? context.save()
     }
 
+    /// Backfills existing imports once, so user-removed tags stay removed.
+    static func extractFilenameTags(for series: Series, in context: ModelContext) {
+        let pending = (series.volumes ?? []).filter { !$0.filenameTagsExtracted }
+        guard !pending.isEmpty else { return }
+        var tags = series.tags ?? []
+        var keys = Set(tags.map { TitleNormalizer.key($0.name) })
+        for volume in pending {
+            for name in FileNameParser.tags(in: volume.title) {
+                guard keys.insert(TitleNormalizer.key(name)).inserted else { continue }
+                tags.append(tag(named: name, in: context))
+            }
+            volume.filenameTagsExtracted = true
+        }
+        series.tags = tags
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+        }
+    }
+
     static func markUnread(_ volume: Volume) {
         volume.isFinished = false
         volume.currentPage = 0

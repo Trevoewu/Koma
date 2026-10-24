@@ -107,7 +107,7 @@ actor ArchiveImporter {
             fileSize: fileSize,
             author: info?.author,
             summary: info?.summary.nonEmpty,
-            tags: info?.tagNames ?? [],
+            tags: (info?.tagNames ?? []) + FileNameParser.tags(in: url.lastPathComponent),
             isRightToLeft: info?.isRightToLeft ?? false
         )
     }

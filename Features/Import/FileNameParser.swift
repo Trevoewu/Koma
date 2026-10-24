@@ -38,6 +38,16 @@ nonisolated enum FileNameParser {
         return Result(seriesTitle: stripped.isEmpty ? fallbackTitle(base) : stripped, number: nil)
     }
 
+    /// Each nonempty square-bracket group is one tag; preserve its spelling.
+    static func tags(in name: String) -> [String] {
+        var seen = Set<String>()
+        return name.matches(of: #/\[([^\[\]]*)\]/#).compactMap { match in
+            let tag = String(match.output.1).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !tag.isEmpty, seen.insert(TitleNormalizer.key(tag)).inserted else { return nil }
+            return tag
+        }
+    }
+
     // MARK: Volume markers
 
     private struct Match {

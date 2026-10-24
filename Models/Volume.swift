@@ -26,6 +26,9 @@ final class Volume {
     /// (A list of all bookmarks is a later feature.)
     var bookmarkedPages: [Int] = []
 
+    /// Tracks the one-time extraction for volumes imported before filename tags existed.
+    var filenameTagsExtracted: Bool = false
+
     var isFinished: Bool = false
     var dateAdded: Date = Date.now
     var lastReadAt: Date?

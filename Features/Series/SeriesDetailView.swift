@@ -38,6 +38,7 @@ struct SeriesDetailView: View {
         .background(SeriesBackground(tint: tint))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { if !isDeleted { toolbar } }
+        .task { SeriesActions.extractFilenameTags(for: series, in: context) }
         .task(id: series.coverURL) { tint = await SeriesTint.load(for: series) }
         .task(id: detectionVolume?.id) {
             guard series.readingMode == nil, let volume = detectionVolume else { return }
@@ -156,7 +157,7 @@ struct SeriesDetailView: View {
                 first.currentPage = 0
                 readingVolume = first
             } label: {
-                Label("Read Again · \(first.displayName)", systemImage: "arrow.counterclockwise")
+                Label("Read Again", systemImage: "arrow.counterclockwise")
             }
             .buttonStyle(.primaryFullWidth)
         }
@@ -212,8 +213,8 @@ struct SeriesDetailView: View {
 
     private func continueTitle(for volume: Volume) -> String {
         volume.hasStarted
-            ? String(localized: "Continue · \(volume.displayName), p. \(volume.currentPage + 1)")
-            : String(localized: "Start Reading · \(volume.displayName)")
+            ? String(localized: "Continue · p. \(volume.currentPage + 1)")
+            : String(localized: "Start Reading")
     }
 
     private var detectionVolume: Volume? { currentVolume ?? series.sortedVolumes.first }
