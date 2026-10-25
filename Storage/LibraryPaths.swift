@@ -7,6 +7,9 @@ import Foundation
 ///       cover.jpg
 ///       pages/0001.jpg, 0002.png, ...
 ///
+///   Application Support/SeriesCovers/
+///     <file>.jpg    covers the user chose (Series.customCoverFile)
+///
 /// We store only the volume id in SwiftData, never a full path,
 /// because the app container path can change between launches.
 enum LibraryPaths {
@@ -23,6 +26,13 @@ enum LibraryPaths {
 
     nonisolated static func coverURL(for id: UUID) -> URL {
         volumeFolder(for: id).appending(path: "cover.jpg")
+    }
+
+    nonisolated static let seriesCoversFolder: URL = URL.applicationSupportDirectory
+        .appending(path: "SeriesCovers", directoryHint: .isDirectory)
+
+    nonisolated static func seriesCoverURL(named file: String) -> URL {
+        seriesCoversFolder.appending(path: file)
     }
 
     nonisolated static func createRootIfNeeded() throws {

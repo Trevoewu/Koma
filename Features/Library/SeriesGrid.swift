@@ -2,11 +2,15 @@ import SwiftUI
 import SwiftData
 
 /// The cover grid: 3 columns on iPhone, about 7 on an iPad in landscape.
-/// Tapping a cover opens the series. A long press offers Delete.
+/// Tapping a cover opens the series. A long press offers Share (CBZ files),
+/// Choose Cover and Delete.
 struct SeriesGrid: View {
     let series: [Series]
     var isWide = false
     var onDelete: (Series) -> Void
+
+    @State private var shareRequest: SeriesShare.Request?
+    @State private var coverSeries: Series?
 
     var body: some View {
         LazyVGrid(columns: columns, alignment: .leading, spacing: isWide ? 22 : 16) {
@@ -19,12 +23,25 @@ struct SeriesGrid: View {
                     NavigationLink(value: item) {
                         Label("Show Series", systemImage: "rectangle.stack")
                     }
+                    Button("Share…", systemImage: "square.and.arrow.up") {
+                        shareRequest = SeriesShare.request(for: item)
+                    }
+                    Button("Choose Cover…", systemImage: "photo.on.rectangle") {
+                        coverSeries = item
+                    }
+                    Divider()
                     Button("Delete Series…", systemImage: "trash", role: .destructive) {
                         onDelete(item)
                     }
                 }
             }
         }
+        .sheet(item: $shareRequest) { request in
+            ShareSheet(items: request.providers) { shareRequest = nil }
+                .presentationDetents([.medium, .large])
+                .onDisappear { try? FileManager.default.removeItem(at: request.folder) }
+        }
+        .sheet(item: $coverSeries) { CoverPickerView(series: $0) }
     }
 
     private var columns: [GridItem] {

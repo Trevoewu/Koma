@@ -18,6 +18,11 @@ final class Series {
     var dateAdded: Date = Date.now
     var lastReadAt: Date?
 
+    /// A cover the user chose from a page: a file name in LibraryPaths.seriesCoversFolder.
+    /// A new name each time, so views see a new URL and load it again.
+    /// nil = the cover of the first volume.
+    var customCoverFile: String?
+
     @Relationship(deleteRule: .cascade, inverse: \Volume.series)
     var volumes: [Volume]? = []
 

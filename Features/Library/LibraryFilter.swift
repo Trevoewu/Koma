@@ -81,8 +81,11 @@ extension Series {
         !hasStarted && dateAdded > Date.now.addingTimeInterval(-7 * 24 * 3600)
     }
 
-    /// The cover of the first volume.
-    var coverURL: URL? { sortedVolumes.first?.coverURL }
+    /// The cover the user chose, else the cover of the first volume.
+    var coverURL: URL? {
+        if let customCoverFile { return LibraryPaths.seriesCoverURL(named: customCoverFile) }
+        return sortedVolumes.first?.coverURL
+    }
 
     /// The dark label on the cover: "Finished", "NEW" or "8 vols".
     var badgeText: String {
@@ -122,6 +125,9 @@ enum LibraryActions {
     static func delete(_ series: Series, in context: ModelContext) {
         for volume in series.volumes ?? [] {
             try? LibraryPaths.deleteFiles(for: volume.id)
+        }
+        if let file = series.customCoverFile {
+            try? FileManager.default.removeItem(at: LibraryPaths.seriesCoverURL(named: file))
         }
         context.delete(series)
         try? context.save()
