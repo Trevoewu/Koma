@@ -49,6 +49,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     appearanceSection
                     readingSection
+                    librarySection
                     storageSection
                     helpSection
                     aboutSection
@@ -124,6 +125,21 @@ struct SettingsView: View {
                         subtitle: Text("While a book is open")) {
                 Toggle("Keep Screen On", isOn: $keepScreenOn).labelsHidden().tint(Theme.switchOn)
             }
+        }
+        .sectionCard()
+    }
+
+    private var librarySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle(LocalizedStringResource(stringLiteral: "Library"))
+            NavigationLink {
+                TagManagerView()
+                    .background(Theme.sheetGradient)
+            } label: {
+                SettingsRow(systemImage: "tag", title: "Tags",
+                            subtitle: Text("Add, rename or delete tags")) { chevron }
+            }
+            .buttonStyle(.plain)
         }
         .sectionCard()
     }

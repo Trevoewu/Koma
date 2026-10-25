@@ -49,14 +49,8 @@ enum SampleData {
     ]
 
     static func insert(into context: ModelContext) {
-        var tagsByName: [String: Tag] = [:]
-        func tag(_ name: String) -> Tag {
-            if let existing = tagsByName[name] { return existing }
-            let new = Tag(name: name)
-            context.insert(new)
-            tagsByName[name] = new
-            return new
-        }
+        // Reuses tags already in the library, so adding the samples twice makes no duplicates.
+        func tag(_ name: String) -> Tag { SeriesActions.tag(named: name, in: context) }
 
         for spec in specs {
             let series = Series(title: spec.title, author: spec.author)

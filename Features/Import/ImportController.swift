@@ -26,6 +26,13 @@ final class ImportController {
     /// The failure summary sheet. Shown at the end if at least one file failed.
     var showsSummary = false
 
+    /// A volume to open in the reader: set when a file that came in with
+    /// "Open in" has been imported. RootView presents it and sets it back to nil.
+    var volumeToOpen: Volume?
+
+    /// Files from "Open in" whose volume opens when it is imported.
+    private var filesToOpen: Set<URL> = []
+
     private var queue: [URL] = []
     private var task: Task<Void, Never>?
     private var currentWork: Task<ImportedVolume, any Error>?
@@ -39,9 +46,11 @@ final class ImportController {
     }
 
     /// Adds files to the queue. If an import is running, they join it.
-    func start(_ urls: [URL], context: ModelContext) {
+    /// `opensWhenDone`: open the reader on the volume when it is imported ("Open in").
+    func start(_ urls: [URL], context: ModelContext, opensWhenDone: Bool = false) {
         guard !urls.isEmpty else { return }
         self.context = context
+        if opensWhenDone { filesToOpen.formUnion(urls) }
         if phase != .running {
             total = 0
             completed = 0
@@ -131,8 +140,12 @@ final class ImportController {
         }
 
         do {
-            try linker.add(imported)
+            let volume = try linker.add(imported)
             importedCount += 1
+            // Several files opened at once: the first one opens, the rest only import.
+            if filesToOpen.remove(url) != nil, volumeToOpen == nil {
+                volumeToOpen = volume
+            }
         } catch {
             try? LibraryPaths.deleteFiles(for: imported.id)
             fail(url, .writeFailed)

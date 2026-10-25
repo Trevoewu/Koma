@@ -13,7 +13,7 @@ struct SeriesEditView: View {
     @State private var title = ""
     @State private var author = ""
     @State private var tags: [String] = []
-    @State private var newTag = ""
+    @State private var showsTagPicker = false
     @State private var mode: ReadingMode?
     @State private var volumes: [Volume] = []
     @State private var orderChanged = false
@@ -34,15 +34,7 @@ struct SeriesEditView: View {
                         Text(tag)
                     }
                     .onDelete { tags.remove(atOffsets: $0) }
-                    HStack {
-                        TextField("Add Tag", text: $newTag)
-                            .onSubmit(addTag)
-                            .submitLabel(.done)
-                        Button("Add", systemImage: "plus.circle.fill", action: addTag)
-                            .labelStyle(.iconOnly)
-                            .font(.title3)
-                            .disabled(trimmed(newTag).isEmpty)
-                    }
+                    Button("Add Tags…", systemImage: "plus.circle.fill") { showsTagPicker = true }
                 } header: {
                     Text("Tags")
                 }
@@ -106,6 +98,7 @@ struct SeriesEditView: View {
         }
         .presentationBackground(Theme.sheetGradient)
         .onAppear(perform: load)
+        .sheet(isPresented: $showsTagPicker) { TagPickerView(selection: $tags) }
     }
 
     // MARK: Actions
@@ -120,17 +113,7 @@ struct SeriesEditView: View {
         volumes = series.sortedVolumes
     }
 
-    private func addTag() {
-        let name = trimmed(newTag)
-        guard !name.isEmpty else { return }
-        if !tags.contains(where: { TitleNormalizer.key($0) == TitleNormalizer.key(name) }) {
-            tags.append(name)
-        }
-        newTag = ""
-    }
-
     private func save() {
-        addTag()   // A typed tag the user did not confirm still counts.
         series.title = trimmed(title)
         series.author = trimmed(author).isEmpty ? nil : trimmed(author)
         series.readingMode = mode

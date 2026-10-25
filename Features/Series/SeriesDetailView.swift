@@ -18,8 +18,7 @@ struct SeriesDetailView: View {
     @State private var isWebtoon = false
     @State private var readingVolume: Volume?
     @State private var showsEdit = false
-    @State private var showsAddTag = false
-    @State private var newTag = ""
+    @State private var showsTagPicker = false
     @State private var confirmsDeleteSeries = false
     @State private var volumeToDelete: Volume?
     /// Set while the page closes after a delete, so nothing reads the deleted models.
@@ -46,13 +45,13 @@ struct SeriesDetailView: View {
         }
         .sheet(isPresented: $showsEdit) { SeriesEditView(series: series) }
         .fullScreenCover(item: $readingVolume) { ReaderView(volume: $0) }
-        .alert("Add Tag", isPresented: $showsAddTag) {
-            TextField("Tag Name", text: $newTag)
-            Button("Add") {
-                SeriesActions.addTag(newTag, to: series, in: context)
-                newTag = ""
-            }
-            Button("Cancel", role: .cancel) { newTag = "" }
+        .sheet(isPresented: $showsTagPicker) {
+            TagPickerView(selection: Binding(
+                get: { series.sortedTagNames },
+                set: { names in
+                    SeriesActions.setTags(names, on: series, in: context)
+                    try? context.save()
+                }))
         }
         .confirmationDialog("Delete “\(series.title)”?", isPresented: $confirmsDeleteSeries, titleVisibility: .visible) {
             Button("Delete Series", role: .destructive, action: deleteSeries)
@@ -150,7 +149,7 @@ struct SeriesDetailView: View {
                 .buttonStyle(.plain)
                     .accessibilityHint("Shows all series with this tag")
             }
-            AddTagChip { showsAddTag = true }
+            AddTagChip { showsTagPicker = true }
         }
         .padding(.horizontal, 8)
     }

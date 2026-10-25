@@ -11,6 +11,7 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
 
     var body: some View {
+        @Bindable var importController = importController
         TabView(selection: $selection) {
             Tab("Library", systemImage: "books.vertical", value: .library) {
                 LibraryView()
@@ -29,8 +30,10 @@ struct RootView: View {
         .onOpenURL { url in
             guard url.isFileURL else { return }
             selection = .library
-            importController.start([url], context: context)
+            importController.start([url], context: context, opensWhenDone: true)
         }
+        // A file opened with Koma opens in the reader once it is imported.
+        .fullScreenCover(item: $importController.volumeToOpen) { ReaderView(volume: $0) }
     }
 }
 

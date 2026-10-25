@@ -14,21 +14,51 @@ enum SeriesActions {
         return tag
     }
 
-    /// Replaces the tags of a series. Tags no series uses any more are deleted.
+    /// Replaces the tags of a series. A tag no series uses stays in the tag pool;
+    /// Settings → Tags deletes it.
     static func setTags(_ names: [String], on series: Series, in context: ModelContext) {
-        let old = series.tags ?? []
         series.tags = names.map { tag(named: $0, in: context) }
-        for tag in old where !(series.tags ?? []).contains(where: { $0 === tag }) {
-            if (tag.series ?? []).allSatisfy({ $0 === series }) { context.delete(tag) }
-        }
     }
 
-    static func addTag(_ name: String, to series: Series, in context: ModelContext) {
+    /// Renames a tag in the pool. If another tag has the new name (case and width
+    /// do not matter), the two become one.
+    static func rename(_ tag: Tag, to name: String, in context: ModelContext) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         let key = TitleNormalizer.key(name)
-        guard !(series.tags ?? []).contains(where: { TitleNormalizer.key($0.name) == key }) else { return }
-        series.tags = (series.tags ?? []) + [tag(named: name, in: context)]
+        let all = (try? context.fetch(FetchDescriptor<Tag>())) ?? []
+        if let other = all.first(where: { $0 !== tag && TitleNormalizer.key($0.name) == key }) {
+            for series in tag.series ?? [] where !(series.tags ?? []).contains(where: { $0 === other }) {
+                series.tags = (series.tags ?? []) + [other]
+            }
+            context.delete(tag)
+        } else {
+            tag.name = name
+        }
+        try? context.save()
+    }
+
+    /// Makes tags with the same name (case and width do not matter) one tag,
+    /// so the pool shows each name once. Older data can have duplicates.
+    static func mergeDuplicateTags(in context: ModelContext) {
+        let all = (try? context.fetch(FetchDescriptor<Tag>())) ?? []
+        var keep: [String: Tag] = [:]
+        var changed = false
+        for tag in all {
+            let key = TitleNormalizer.key(tag.name)
+            guard let first = keep[key] else { keep[key] = tag; continue }
+            for series in tag.series ?? [] where !(series.tags ?? []).contains(where: { $0 === first }) {
+                series.tags = (series.tags ?? []) + [first]
+            }
+            context.delete(tag)
+            changed = true
+        }
+        if changed { try? context.save() }
+    }
+
+    /// Deletes a tag from the pool and from every series that has it.
+    static func delete(_ tag: Tag, in context: ModelContext) {
+        context.delete(tag)
         try? context.save()
     }
 
