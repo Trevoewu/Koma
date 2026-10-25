@@ -36,11 +36,7 @@ struct SeriesGrid: View {
                 }
             }
         }
-        .sheet(item: $shareRequest) { request in
-            ShareSheet(items: request.providers) { shareRequest = nil }
-                .presentationDetents([.medium, .large])
-                .onDisappear { try? FileManager.default.removeItem(at: request.folder) }
-        }
+        .seriesShareSheet($shareRequest)
         .sheet(item: $coverSeries) { CoverPickerView(series: $0) }
     }
 

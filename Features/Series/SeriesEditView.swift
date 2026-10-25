@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Edit sheet for a series: title, author, tags, reading mode and volume order.
+/// Edit sheet for a series: title, author, cover, tags, reading mode and volume order.
 /// Changes apply only on Save. Same look as the other sheets (dark gradient).
 struct SeriesEditView: View {
     let series: Series
@@ -14,6 +14,9 @@ struct SeriesEditView: View {
     @State private var author = ""
     @State private var tags: [String] = []
     @State private var showsTagPicker = false
+    /// nil = keep the cover as it is.
+    @State private var coverChoice: CoverChoice?
+    @State private var showsCoverPicker = false
     @State private var mode: ReadingMode?
     @State private var volumes: [Volume] = []
     @State private var orderChanged = false
@@ -26,6 +29,27 @@ struct SeriesEditView: View {
                     TextField("Title", text: $title)
                         .font(.body.weight(.semibold))
                     TextField("Author", text: $author, prompt: Text("Author (optional)"))
+                }
+                .listRowBackground(Theme.sectionFill)
+
+                Section("Cover") {
+                    HStack(spacing: 16) {
+                        CoverView(title: trimmed(title).isEmpty ? series.title : trimmed(title),
+                                  imageURL: coverPreviewURL, cornerRadius: 8)
+                            .frame(width: 64)
+                            .shadow(radius: 0)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Button("Choose Cover…", systemImage: "photo.on.rectangle") { showsCoverPicker = true }
+                            if hasChosenCover {
+                                Button("Use Default Cover", systemImage: "arrow.uturn.backward") {
+                                    coverChoice = .automatic
+                                }
+                            }
+                        }
+                        // Two buttons in one row: each must take only its own taps.
+                        .buttonStyle(.borderless)
+                    }
+                    .padding(.vertical, 4)
                 }
                 .listRowBackground(Theme.sectionFill)
 
@@ -99,6 +123,9 @@ struct SeriesEditView: View {
         .presentationBackground(Theme.sheetGradient)
         .onAppear(perform: load)
         .sheet(isPresented: $showsTagPicker) { TagPickerView(selection: $tags) }
+        .sheet(isPresented: $showsCoverPicker) {
+            CoverPickerView(series: series, onChoose: { coverChoice = $0 }, canUseDefault: hasChosenCover)
+        }
     }
 
     // MARK: Actions
@@ -111,6 +138,23 @@ struct SeriesEditView: View {
         tags = series.sortedTagNames
         mode = series.readingMode
         volumes = series.sortedVolumes
+    }
+
+    /// The cover as it will be after Save.
+    private var coverPreviewURL: URL? {
+        switch coverChoice {
+        case .page(let url): url
+        case .automatic: volumes.first?.coverURL
+        case nil: series.coverURL
+        }
+    }
+
+    private var hasChosenCover: Bool {
+        switch coverChoice {
+        case .page: true
+        case .automatic: false
+        case nil: series.customCoverFile != nil
+        }
     }
 
     private func save() {
@@ -126,6 +170,13 @@ struct SeriesEditView: View {
             }
         }
         try? context.save()
+        switch coverChoice {
+        case .page(let url):
+            let series = series
+            Task { await SeriesCover.use(page: url, for: series) }
+        case .automatic: SeriesCover.reset(series)
+        case nil: break
+        }
         dismiss()
     }
 

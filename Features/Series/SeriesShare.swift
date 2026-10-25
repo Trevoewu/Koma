@@ -136,6 +136,17 @@ nonisolated final class CBZItemProvider: UIActivityItemProvider, @unchecked Send
     }
 }
 
+extension View {
+    /// Shows the share sheet for a request, and deletes its files when it closes.
+    func seriesShareSheet(_ request: Binding<SeriesShare.Request?>) -> some View {
+        sheet(item: request) { shown in
+            ShareSheet(items: shown.providers) { request.wrappedValue = nil }
+                .presentationDetents([.medium, .large])
+                .onDisappear { try? FileManager.default.removeItem(at: shown.folder) }
+        }
+    }
+}
+
 /// The system share sheet.
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]

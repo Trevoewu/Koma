@@ -19,6 +19,7 @@ struct SeriesDetailView: View {
     @State private var readingVolume: Volume?
     @State private var showsEdit = false
     @State private var showsTagPicker = false
+    @State private var shareRequest: SeriesShare.Request?
     @State private var confirmsDeleteSeries = false
     @State private var volumeToDelete: Volume?
     /// Set while the page closes after a delete, so nothing reads the deleted models.
@@ -44,6 +45,7 @@ struct SeriesDetailView: View {
             isWebtoon = await WebtoonDetector.isWebtoon(volume)
         }
         .sheet(isPresented: $showsEdit) { SeriesEditView(series: series) }
+        .seriesShareSheet($shareRequest)
         .fullScreenCover(item: $readingVolume) { ReaderView(volume: $0) }
         .sheet(isPresented: $showsTagPicker) {
             TagPickerView(selection: Binding(
@@ -188,6 +190,10 @@ struct SeriesDetailView: View {
         ToolbarSpacer(.fixed, placement: .topBarTrailing)
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
+                Button("Share…", systemImage: "square.and.arrow.up") {
+                    shareRequest = SeriesShare.request(for: series)
+                }
+                Divider()
                 Button("Mark All as Read", systemImage: "checkmark.circle") {
                     SeriesActions.markAll(series, read: true)
                 }

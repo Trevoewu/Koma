@@ -41,10 +41,22 @@ enum SeriesCover {
     }
 }
 
+/// A cover picked in the Edit sheet, applied on Save.
+enum CoverChoice: Equatable {
+    case page(URL)
+    /// The cover of the first volume.
+    case automatic
+}
+
 /// "Choose Cover": the pages of one volume, shown as 2:3 covers. Tap one to use it.
 /// A menu at the top switches the volume.
+/// Without `onChoose` the cover is saved at once (long-press menu). With it, the
+/// choice goes back to the caller, which saves it later (the Edit sheet).
 struct CoverPickerView: View {
     let series: Series
+    var onChoose: ((CoverChoice) -> Void)? = nil
+    /// Shows "Use Default Cover". nil = when the series has a chosen cover.
+    var canUseDefault: Bool? = nil
 
     @Environment(\.dismiss) private var dismiss
     @State private var volumeID: UUID?
@@ -79,11 +91,11 @@ struct CoverPickerView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel", role: .cancel) { dismiss() }
                 }
-                if series.customCoverFile != nil {
+                if canUseDefault ?? (series.customCoverFile != nil) {
                     // At the bottom: in the top bar this long label cuts the title.
                     ToolbarItem(placement: .bottomBar) {
                         Button("Use Default Cover") {
-                            SeriesCover.reset(series)
+                            if let onChoose { onChoose(.automatic) } else { SeriesCover.reset(series) }
                             dismiss()
                         }
                     }
@@ -98,6 +110,11 @@ struct CoverPickerView: View {
 
     private func pageButton(url: URL, number: Int) -> some View {
         Button {
+            if let onChoose {
+                onChoose(.page(url))
+                dismiss()
+                return
+            }
             isSaving = true
             Task {
                 await SeriesCover.use(page: url, for: series)
