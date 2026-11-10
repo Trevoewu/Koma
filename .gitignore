@@ -17,3 +17,7 @@ xcuserdata/
 !.env.example
 *.p12
 *.mobileprovision
+
+# Swift packages
+.build/
+.swiftpm/

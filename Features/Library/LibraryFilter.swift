@@ -81,9 +81,10 @@ extension Series {
         !hasStarted && dateAdded > Date.now.addingTimeInterval(-7 * 24 * 3600)
     }
 
-    /// The cover the user chose, else the cover of the first volume.
+    /// The cover the user chose, else the cover from the source, else the cover of the first volume.
     var coverURL: URL? {
         if let customCoverFile { return LibraryPaths.seriesCoverURL(named: customCoverFile) }
+        if let sourceCoverFile { return LibraryPaths.seriesCoverURL(named: sourceCoverFile) }
         return sortedVolumes.first?.coverURL
     }
 
@@ -126,7 +127,7 @@ enum LibraryActions {
         for volume in series.volumes ?? [] {
             try? LibraryPaths.deleteFiles(for: volume.id)
         }
-        if let file = series.customCoverFile {
+        for file in [series.customCoverFile, series.sourceCoverFile].compactMap({ $0 }) {
             try? FileManager.default.removeItem(at: LibraryPaths.seriesCoverURL(named: file))
         }
         context.delete(series)

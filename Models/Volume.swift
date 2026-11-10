@@ -36,6 +36,9 @@ final class Volume {
     /// Size of the extracted pages on disk, in bytes.
     var fileSize: Int64 = 0
 
+    /// The chapter key in the series' source, for a chapter downloaded from a source.
+    var sourceChapterKey: String?
+
     var series: Series?
 
     init(title: String, number: Double? = nil, pageFiles: [String] = [], fileSize: Int64 = 0) {
@@ -60,12 +63,14 @@ extension Volume {
 
     /// "Volume 3" (reader title bar), or the file title if no number was found.
     var longDisplayName: String {
+        if let number, sourceChapterKey != nil { return String(localized: "Chapter \(number.formatted(.number.grouping(.never)))") }
         if let number { return String(localized: "Volume \(number.formatted())") }
         return title
     }
 
     /// "Vol. 3", or the file title if no number was found.
     var displayName: String {
+        if let number, sourceChapterKey != nil { return String(localized: "Ch. \(number.formatted(.number.grouping(.never)))") }
         if let number { return String(localized: "Vol. \(number.formatted())") }
         return title
     }

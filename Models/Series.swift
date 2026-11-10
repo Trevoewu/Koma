@@ -23,6 +23,19 @@ final class Series {
     /// nil = the cover of the first volume.
     var customCoverFile: String?
 
+    /// The source plugin and its manga key, for a series downloaded from a source.
+    /// nil for imported files.
+    var sourceID: String?
+    var sourceMangaKey: String?
+
+    /// The last details the source sent (JSON of SourceManga: cover URL, summary,
+    /// status, chapter list). The series page shows them at once and offline.
+    var sourceDetails: Data?
+
+    /// The cover from the source, saved on disk: a file in LibraryPaths.seriesCoversFolder.
+    /// Used when the user did not choose a cover. A new name each time it changes.
+    var sourceCoverFile: String?
+
     @Relationship(deleteRule: .cascade, inverse: \Volume.series)
     var volumes: [Volume]? = []
 

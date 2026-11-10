@@ -11,6 +11,9 @@ struct LibraryLinker {
     let context: ModelContext
     private var seriesByKey: [String: Series]
     private var tagsByKey: [String: Tag]
+    /// For source downloads: the series that is already linked to the manga.
+    /// It wins over a title match, so a renamed series keeps its new chapters.
+    private var linkedSeries: Series?
 
     init(context: ModelContext) throws {
         self.context = context
@@ -20,6 +23,15 @@ struct LibraryLinker {
         let allTags = try context.fetch(FetchDescriptor<Tag>())
         tagsByKey = Dictionary(allTags.map { (TitleNormalizer.key($0.name), $0) },
                                uniquingKeysWith: { first, _ in first })
+    }
+
+    /// A linker for chapters from a source manga.
+    init(context: ModelContext, sourceID: String, mangaKey: String) throws {
+        try self.init(context: context)
+        let descriptor = FetchDescriptor<Series>(predicate: #Predicate {
+            $0.sourceID == sourceID && $0.sourceMangaKey == mangaKey
+        })
+        linkedSeries = try context.fetch(descriptor).first
     }
 
     /// Inserts and saves. If the save fails, the changes are rolled back and the
@@ -64,6 +76,7 @@ struct LibraryLinker {
     }
 
     private mutating func series(titled title: String) -> Series {
+        if let linkedSeries, !linkedSeries.isDeleted { return linkedSeries }
         let key = TitleNormalizer.key(title)
         if let existing = seriesByKey[key] { return existing }
         let series = Series(title: title)

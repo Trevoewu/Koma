@@ -1,10 +1,10 @@
 import SwiftUI
 import SwiftData
 
-/// The native iOS 26 floating glass tab bar: Library, History and Search.
+/// The native iOS 26 floating glass tab bar: Library, History, Browse and Search.
 /// On iPad it shows as the tab bar at the top, with no sidebar.
 struct RootView: View {
-    enum AppTab: Hashable { case library, history, search }
+    enum AppTab: Hashable { case library, history, browse, search }
 
     @State private var selection: AppTab = .library
     @Environment(ImportController.self) private var importController
@@ -18,6 +18,9 @@ struct RootView: View {
             }
             Tab("History", systemImage: "clock", value: .history) {
                 HistoryView()
+            }
+            Tab("Browse", systemImage: "globe", value: .browse) {
+                BrowseView()
             }
             Tab(value: .search, role: .search) {
                 SearchView()
@@ -34,6 +37,8 @@ struct RootView: View {
         }
         // A file opened with Koma opens in the reader once it is imported.
         .fullScreenCover(item: $importController.volumeToOpen) { ReaderView(volume: $0) }
+        // Pages left behind by an import or download that the app quit during.
+        .task { await OrphanCleanup.run(in: context) }
     }
 }
 
@@ -42,6 +47,8 @@ struct RootView: View {
     RootView()
         .modelContainer(SampleData.makeContainer())
         .environment(ImportController())
+        .environment(SourceManager())
+        .environment(SourceDownloads())
         .preferredColorScheme(.dark)
 }
 #endif

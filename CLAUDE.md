@@ -13,8 +13,19 @@ series, and gives a clean reader with three modes.
 
 - Business model: **paid up front**. No in-app purchases, no ads, no account, no server.
 - Privacy: all data stays on the device. App Store privacy label = "Data Not Collected".
-- App Store rule: the app never supplies or links to manga content. No download-from-web
-  feature. Screenshots use invented placeholder art only.
+  Source plugins send requests to the sites the user chose; Koma itself collects nothing.
+- App Store rule: Koma never supplies, bundles or recommends manga content or source
+  repositories. Screenshots use invented placeholder art only.
+- **Source plugins** (Browse tab, `Features/Sources/`): Koma runs Aidoku-format source
+  plugins (`.aix`, aidoku-rs 0.3 ABI) that the user installs from a repository address
+  they type in. Rules:
+  - Default repositories: only verified public-domain or licensed sources
+    (`SourceManager.verifiedRepositories`, empty until one is verified). Never add the
+    Aidoku community repository or any unauthorized site as a default or suggestion.
+  - Koma does not maintain source repositories. It stays compatible with community plugins.
+  - Sources with `contentRating` 2 (mainly adult) are hidden and cannot be installed.
+  - Opening a chapter downloads it into the library as a `Volume` (`Volume.sourceChapterKey`,
+    `Series.sourceID` / `sourceMangaKey`). The normal reader reads it.
 - Competitor to beat on polish and simplicity (not on feature count): KedaReader/KedaManga.
 - App name: **Koma** (Japanese コマ = a manga panel). Use "Koma" in all user-facing text,
   the app display name, and the privacy policy. The Swift app struct is `KomaApp`.
@@ -27,6 +38,10 @@ series, and gives a clean reader with three modes.
   every property has a default, every relationship is optional, no `@Attribute(.unique)`.
   Keep it that way (iCloud sync is a possible later feature).
 - **ZIPFoundation** (SPM, https://github.com/weichsel/ZIPFoundation) for unzipping.
+- **SwiftSoup** (SPM, MIT) for the plugins' HTML API. **wasm3** (MIT) is vendored as C in
+  `Packages/CWasm3` and runs the plugins' WebAssembly.
+- License rule: do not copy code from the Aidoku app (GPL-3.0) or AidokuRunner (no license).
+  The runtime in `Features/Sources/Runtime/` is written from the aidoku-rs (MIT) API spec.
 - Native **Liquid Glass** APIs (`glassEffect`, `.buttonStyle(.glass)`, `GlassEffectContainer`).
   No fallback material for older iOS.
 - Dark mode first (the default). Settings → Appearance: System/Light/Dark. Every Theme color is a
@@ -47,7 +62,10 @@ series, and gives a clean reader with three modes.
     Models/           Series, Volume, Tag, ReadingMode
     Storage/          LibraryPaths (files on disk), ImageDownsampler
     DesignSystem/     Theme, Buttons, Chips, CoverView, ReadingProgressBar
-    Features/         Import/, Library/, History/, Search/, Series/, Reader/, Settings/
+    Features/         Import/, Library/, History/, Search/, Series/, Reader/, Settings/, Sources/
+    Features/Sources/Runtime/  Plugin runtime: WasmInstance, SourceHost (std/net/defaults),
+                      HTMLImports, ScriptImports (js + canvas), Postcard, SourceRunner
+    Packages/CWasm3/  Vendored wasm3 interpreter (local Swift package)
     Preview Content/  SampleData (DEBUG only)
 
 Files on disk:
@@ -55,7 +73,10 @@ Files on disk:
     Application Support/MangaLibrary/<volume UUID>/cover.jpg
     Application Support/MangaLibrary/<volume UUID>/pages/0001.jpg, 0002.png, ...
 
+    Application Support/Sources/<source id>/main.wasm, source.json, settings.json, icon.png
+
 SwiftData stores only the UUID, never a full path (the container path can change).
+Plugin settings ("defaults") are postcard bytes in UserDefaults (`source.defaults.<id>`).
 
 ## Design rules (from the "Koma" prototype design canvas)
 - Background: dark vertical gradient `#1C1C1E → #0B0B0C → #000000` (`ScreenBackground`).
@@ -67,7 +88,7 @@ SwiftData stores only the UUID, never a full path (the container path can change
 - Cards: `.glassCard()` (corner radius 28). Covers: 2:3, radius 14, dark glass badge
   bottom-left ("8 vols", "NEW", "Finished").
 - Text colors: primary white, secondary `#AEAEB2`, tertiary `#8E8E93`.
-- Tab bar: native iOS 26 `TabView` (floating glass). Tabs: Library, History, plus the
+- Tab bar: native iOS 26 `TabView` (floating glass). Tabs: Library, History, Browse, plus the
   search tab (`Tab(role: .search)`). Settings opens as a sheet from a gear button.
 - Reader: black background. Controls float as glass capsules (top: back, title, mode +
   bookmark; bottom: page label, slider, hint). Mode menu is a glass popover.
@@ -79,11 +100,14 @@ SwiftData stores only the UUID, never a full path (the container path can change
    (All / Reading / Unread / Finished), "Continue" hero glass card (cover, title, author,
    "Vol. 3 · Page 42 of 186", progress, white Resume, glass "…"), "All Series" cover grid
    (3 columns iPhone, ~7 iPad). iPad: no sidebar, same layout, wider hero.
-2. **Series detail** — background tinted with the cover color; back, Edit, "…" glass
-   buttons; centered cover; title; **author** (tap → other series by this author);
-   **tags** as glass chips + dashed "+ Tag" chip; "8 volumes · 1,412 pages · Right to Left";
-   white "Continue · Vol. 3, p. 42"; volume cover grid (4 columns; finished = dimmed + check;
-   current = progress bar).
+2. **Series page** (`SeriesPageView`, one page for every series and for a manga in Browse) —
+   background tinted with the cover color; back, Edit, "…" glass buttons (library series);
+   cover beside the title; **author** (tap → other series by this author); info line
+   ("8 volumes · 1,412 pages · Right to Left", or "Ongoing" + "MANGA Plus · English");
+   summary; **tags** as glass chips + dashed "+ Tag" chip; one white Continue button; then a
+   list: volumes (imported) or chapters (source; download ring, check, reading ring).
+   Source details are cached on the series (`sourceDetails`, `sourceCoverFile`), so the page
+   opens at once and offline, then refreshes.
 3. **Reader** — modes: Right to Left, Left to Right, Vertical Scroll. Tap zones in paged
    modes: left 30% / center 40% / right 30%. Center toggles controls. In RTL, left = next
    page. In LTR, right = next page. Progress bar fills from the trailing edge in RTL.
@@ -104,6 +128,8 @@ settings; first launch; 4 languages.
 
 Out (later): RAR/7z/PDF, text EPUBs, plain image folders, iCloud sync, bookmarks list,
 collections, network/NAS sources, auto-split of double pages.
+Sources, not yet: Home layouts, filters, source settings UI, web views (`webview_*`),
+logins, canvas paths and text, reading a chapter before its download finishes.
 
 ## Build plan
 - [x] **Step 1 — Setup.** Models, LibraryPaths, ImageDownsampler, design-system

@@ -201,6 +201,8 @@ struct LibraryView: View {
     LibraryView()
         .modelContainer(SampleData.makeContainer())
         .environment(ImportController())
+        .environment(SourceManager())
+        .environment(SourceDownloads())
         .preferredColorScheme(.dark)
 }
 
@@ -208,6 +210,8 @@ struct LibraryView: View {
     LibraryView()
         .modelContainer(for: [Series.self, Volume.self, Tag.self], inMemory: true)
         .environment(ImportController())
+        .environment(SourceManager())
+        .environment(SourceDownloads())
         .preferredColorScheme(.dark)
 }
 #endif

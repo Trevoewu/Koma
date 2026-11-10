@@ -17,7 +17,17 @@ enum ImageDownsampler {
     nonisolated static func downsample(_ url: URL, maxPixelSize: CGFloat) -> UIImage? {
         let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
         guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
+        return thumbnail(source, maxPixelSize: maxPixelSize)
+    }
 
+    /// For downloaded bytes, for example a cover from a source.
+    nonisolated static func downsample(_ data: Data, maxPixelSize: CGFloat) -> UIImage? {
+        let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary
+        guard let source = CGImageSourceCreateWithData(data as CFData, sourceOptions) else { return nil }
+        return thumbnail(source, maxPixelSize: maxPixelSize)
+    }
+
+    nonisolated private static func thumbnail(_ source: CGImageSource, maxPixelSize: CGFloat) -> UIImage? {
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceShouldCacheImmediately: true,

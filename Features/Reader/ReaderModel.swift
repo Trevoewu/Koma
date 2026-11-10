@@ -72,7 +72,9 @@ final class ReaderModel {
         prefersSpreads = UserDefaults.standard.object(forKey: Self.spreadsKey) as? Bool ?? true
         currentPage = min(max(volume.currentPage, 0), max(urls.count - 1, 0))
         rebuildGroups()
-        markOpened()
+        // markOpened() runs from ReaderView.onAppear, not here. SwiftUI can build a
+        // ReaderView many times; a model change in init made the parent redraw and
+        // build it again, in an endless loop.
     }
 
     var pageCount: Int { pageURLs.count }
@@ -257,7 +259,8 @@ final class ReaderModel {
         scheduleSave()
     }
 
-    private func markOpened() {
+    /// Call once, when the reader appears.
+    func markOpened() {
         volume.lastReadAt = .now
         volume.series?.lastReadAt = .now
     }

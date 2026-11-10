@@ -191,6 +191,8 @@ struct SeriesBackground: View {
 /// Lays out views in rows that wrap, each row centered. For the tag chips.
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
+    /// false = rows start at the leading edge.
+    var centered = true
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let rows = rows(for: subviews, width: proposal.width ?? .infinity)
@@ -202,7 +204,7 @@ struct FlowLayout: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var y = bounds.minY
         for row in rows(for: subviews, width: bounds.width) {
-            var x = bounds.minX + (bounds.width - row.width) / 2
+            var x = bounds.minX + (centered ? (bounds.width - row.width) / 2 : 0)
             for index in row.indices {
                 let size = subviews[index].sizeThatFits(.unspecified)
                 subviews[index].place(at: CGPoint(x: x, y: y + (row.height - size.height) / 2), proposal: .unspecified)

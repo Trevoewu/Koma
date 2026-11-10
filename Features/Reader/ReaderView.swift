@@ -59,7 +59,10 @@ struct ReaderView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
             model.cache.discardRecentImages()
         }
-        .onAppear { UIApplication.shared.isIdleTimerDisabled = keepScreenOn }
+        .onAppear {
+            UIApplication.shared.isIdleTimerDisabled = keepScreenOn
+            model.markOpened()
+        }
         .onDisappear {
             model.saveNow()
             UIApplication.shared.isIdleTimerDisabled = false

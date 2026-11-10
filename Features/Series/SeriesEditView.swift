@@ -264,8 +264,9 @@ private struct FilteredSeriesView: View {
 extension View {
     /// The pages a library navigation stack can push: a series, an author and a tag.
     func libraryDestinations() -> some View {
-        navigationDestination(for: Series.self) { SeriesDetailView(series: $0) }
+        navigationDestination(for: Series.self) { SeriesPageView(series: $0) }
             .navigationDestination(for: AuthorRoute.self) { AuthorSeriesView(route: $0) }
             .navigationDestination(for: TagRoute.self) { TagSeriesView(route: $0) }
+            .sourceDestinations()
     }
 }

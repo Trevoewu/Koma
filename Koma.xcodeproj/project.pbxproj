@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000301 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000402 /* ZIPFoundation */; };
+		A10000000000000000000302 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000404 /* SwiftSoup */; };
+		A10000000000000000000303 /* CWasm3 in Frameworks */ = {isa = PBXBuildFile; productRef = A10000000000000000000406 /* CWasm3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +57,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000301 /* ZIPFoundation in Frameworks */,
+				A10000000000000000000302 /* SwiftSoup in Frameworks */,
+				A10000000000000000000303 /* CWasm3 in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -110,6 +114,8 @@
 			name = Koma;
 			packageProductDependencies = (
 				A10000000000000000000402 /* ZIPFoundation */,
+				A10000000000000000000404 /* SwiftSoup */,
+				A10000000000000000000406 /* CWasm3 */,
 			);
 			productName = Koma;
 			productReference = A10000000000000000000101 /* Koma.app */;
@@ -144,6 +150,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A10000000000000000000401 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				A10000000000000000000403 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				A10000000000000000000405 /* XCLocalSwiftPackageReference "Packages/CWasm3" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A10000000000000000000602 /* Products */;
@@ -231,13 +239,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_ASSET_PATHS = "\"Preview Content\"";
 				DEVELOPMENT_TEAM = B247XZ5PFR;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Koma;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -270,13 +279,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_ASSET_PATHS = "\"Preview Content\"";
 				DEVELOPMENT_TEAM = B247XZ5PFR;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Koma;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.books";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -327,6 +337,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		A10000000000000000000405 /* XCLocalSwiftPackageReference "Packages/CWasm3" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/CWasm3;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		A10000000000000000000401 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -336,6 +353,14 @@
 				minimumVersion = 0.9.19;
 			};
 		};
+		A10000000000000000000403 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/scinfu/SwiftSoup";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.8.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -343,6 +368,15 @@
 			isa = XCSwiftPackageProductDependency;
 			package = A10000000000000000000401 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
+		};
+		A10000000000000000000404 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000000000000000000403 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
+			productName = SwiftSoup;
+		};
+		A10000000000000000000406 /* CWasm3 */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CWasm3;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
