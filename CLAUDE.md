@@ -23,7 +23,9 @@ series, and gives a clean reader with three modes.
     (`SourceManager.verifiedRepositories`, empty until one is verified). Never add the
     Aidoku community repository or any unauthorized site as a default or suggestion.
   - Koma does not maintain source repositories. It stays compatible with community plugins.
-  - Sources with `contentRating` 2 (mainly adult) are hidden and cannot be installed.
+  - Sources with `contentRating` 2 (mainly adult) are hidden and cannot be installed, unless
+    the user turns on Settings → Sources → Show Adult Sources (off by default; turning it on
+    asks for an 18+ confirmation; `SettingsKey.showAdultSources`).
   - Opening a chapter downloads it into the library as a `Volume` (`Volume.sourceChapterKey`,
     `Series.sourceID` / `sourceMangaKey`). The normal reader reads it.
 - Competitor to beat on polish and simplicity (not on feature count): KedaReader/KedaManga.
@@ -42,8 +44,8 @@ series, and gives a clean reader with three modes.
   `Packages/CWasm3` and runs the plugins' WebAssembly.
 - License rule: do not copy code from the Aidoku app (GPL-3.0) or AidokuRunner (no license).
   The runtime in `Features/Sources/Runtime/` is written from the aidoku-rs (MIT) API spec.
-- Native **Liquid Glass** APIs (`glassEffect`, `.buttonStyle(.glass)`, `GlassEffectContainer`).
-  No fallback material for older iOS.
+- Native **Liquid Glass** APIs (`glassEffect`, `.buttonStyle(.glass)`, `GlassEffectContainer`)
+  for buttons, chips and controls. No fallback material for older iOS.
 - Dark mode first (the default). Settings → Appearance: System/Light/Dark. Every Theme color is a
   light/dark pair (`Color.dynamic`); in light mode the white primary button is near-black.
   Use `Theme.primaryText`, not `.white`, outside the reader. The reader is always dark.
@@ -85,6 +87,11 @@ Plugin settings ("defaults") are postcard bytes in UserDefaults (`source.default
 - Secondary buttons: Apple `.buttonStyle(.glass)` capsules. Icon buttons: `GlassIconButton`
   (round glass, 44 pt; 48 pt in the reader).
 - Filter chips: selected = white capsule, others = glass capsule (`FilterChip`).
+- No drop shadows (`.shadow`) on covers, cards or buttons. No grey tinted fills on cards:
+  cards and grouped lists use the solid `Theme.cardFill` (white in light mode, #1C1C1E in dark);
+  rows inside a card have no fill of their own (no nested cards).
+- Lists of sources: inset grouped (`.insetGrouped`), one rounded card per language, small
+  uppercase header in the language's own name ("日本語", "ENGLISH"), inset separators.
 - Cards: `.glassCard()` (corner radius 28). Covers: 2:3, radius 14, dark glass badge
   bottom-left ("8 vols", "NEW", "Finished").
 - Text colors: primary white, secondary `#AEAEB2`, tertiary `#8E8E93`.
@@ -118,7 +125,7 @@ Plugin settings ("defaults") are postcard bytes in UserDefaults (`source.default
    "Only import manga you are allowed to use".
 6. **Settings** (sheet with Done) — Appearance segmented control; Reading (default
    direction, detect webtoons, keep screen on); Storage (size used, delete finished
-   volumes); Help & Feedback; About.
+   volumes); Sources (Show Adult Sources); Help & Feedback; About.
 
 ## Version 1 scope
 In: import of ZIP/CBZ/EPUB (picker, Files app "Open in", share sheet, AirDrop), library with series

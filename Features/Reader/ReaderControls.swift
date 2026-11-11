@@ -291,7 +291,6 @@ struct ReaderSlider: View {
                 Circle()
                     .fill(.white)
                     .frame(width: 20, height: 20)
-                    .shadow(color: .black.opacity(0.4), radius: 2, y: 1)
                     .offset(x: thumbX - 10)
             }
             .frame(maxHeight: .infinity)

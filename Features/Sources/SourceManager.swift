@@ -62,8 +62,17 @@ nonisolated struct RepositorySource: Codable, Hashable, Identifiable, Sendable {
         try container.encodeIfPresent(minAppVersion, forKey: .minAppVersion)
     }
 
-    /// Koma never lists or installs sources that are mainly adult content.
-    var isAllowed: Bool { (contentRating ?? 0) < 2 }
+    /// Rated mainly adult content (contentRating 2).
+    var isAdult: Bool { (contentRating ?? 0) >= 2 }
+
+    /// Mainly adult sources are listed and installed only when the user turned on
+    /// Settings → Show Adult Sources.
+    var isAllowed: Bool { !isAdult || SourceAdultFilter.isEnabled }
+}
+
+/// Settings → Show Adult Sources.
+nonisolated enum SourceAdultFilter {
+    static var isEnabled: Bool { UserDefaults.standard.bool(forKey: SettingsKey.showAdultSources) }
 }
 
 nonisolated enum SourceInstallError: LocalizedError {
@@ -78,7 +87,7 @@ nonisolated enum SourceInstallError: LocalizedError {
         case .invalidAddress: String(localized: "Enter a web address that starts with https://.")
         case .notARepository: String(localized: "No source list was found at this address.")
         case .badPackage: String(localized: "The source package is damaged or is not a source.")
-        case .notAllowed: String(localized: "Koma does not install sources for adult content.")
+        case .notAllowed: String(localized: "Turn on Show Adult Sources in Settings to install this source.")
         case .incompatible: String(localized: "This source uses a format that Koma does not support.")
         }
     }
@@ -231,11 +240,11 @@ final class SourceManager {
                   (response as? HTTPURLResponse)?.statusCode == 200
             else { continue }
             if let index = try? JSONDecoder().decode(Index.self, from: data) {
-                return (index.name, index.sources.filter(\.isAllowed))
+                return (index.name, index.sources)
             }
             // The old format is a plain list.
             if let sources = try? JSONDecoder().decode([RepositorySource].self, from: data) {
-                return (nil, sources.filter(\.isAllowed))
+                return (nil, sources)
             }
         }
         throw SourceInstallError.notARepository
@@ -285,7 +294,7 @@ final class SourceManager {
               let info = try? SourceInfo(json: infoData), info.id == expectedID,
               FileManager.default.fileExists(atPath: staging.appending(path: "main.wasm").path)
         else { throw SourceInstallError.badPackage }
-        guard info.contentRating < 2 else { throw SourceInstallError.notAllowed }
+        guard info.contentRating < 2 || SourceAdultFilter.isEnabled else { throw SourceInstallError.notAllowed }
 
         // Load it once, so a source that Koma cannot run is not installed.
         do { _ = try SourceRunner(folder: staging) } catch { throw SourceInstallError.incompatible }

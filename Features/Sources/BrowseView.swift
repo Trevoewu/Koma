@@ -4,43 +4,50 @@ import SwiftUI
 /// Koma comes with no sources. The user adds a repository address in the sheet.
 struct BrowseView: View {
     @Environment(SourceManager.self) private var manager
-    @Environment(\.horizontalSizeClass) private var sizeClass
+    @AppStorage(SettingsKey.showAdultSources) private var showsAdult = false
     @State private var showsRepositories = false
     @State private var sourceToRemove: SourceInfo?
 
     var body: some View {
         NavigationStack {
             Group {
-                if manager.installed.isEmpty {
+                if visibleSources.isEmpty {
                     emptyState
                 } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
-                            ForEach(SourceLanguages.sections(manager.installed, languages: manager.readingLanguages, name: \.name)) { section in
-                                Section {
-                                    ForEach(section.items) { source in
-                                        NavigationLink(value: source) {
-                                            InstalledSourceRow(source: source)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .contextMenu {
-                                            Button("Remove Source", systemImage: "trash", role: .destructive) {
-                                                sourceToRemove = source
-                                            }
+                    // One rounded group per language, rows separated by inset lines.
+                    List {
+                        ForEach(SourceLanguages.sections(visibleSources, languages: manager.readingLanguages, name: \.name)) { section in
+                            Section {
+                                ForEach(section.items) { source in
+                                    NavigationLink(value: source) {
+                                        InstalledSourceRow(source: source)
+                                    }
+                                    .listRowBackground(Theme.cardFill)
+                                    .swipeActions {
+                                        Button("Remove Source", systemImage: "trash", role: .destructive) {
+                                            sourceToRemove = source
                                         }
                                     }
-                                } header: {
-                                    LanguageHeader(title: section.title)
+                                    .contextMenu {
+                                        Button("Remove Source", systemImage: "trash", role: .destructive) {
+                                            sourceToRemove = source
+                                        }
+                                    }
                                 }
+                            } header: {
+                                LanguageHeader(title: section.title)
                             }
                         }
-                        .padding(.horizontal, sizeClass == .regular ? 40 : 16)
-                        .padding(.vertical, 8)
                     }
+                    .listStyle(.insetGrouped)
+                    .scrollContentBackground(.hidden)
+                    // Same card width as the Sources sheet (a sheet and a tab get different defaults).
+                    .contentMargins(.horizontal, Theme.Size.listMargin, for: .scrollContent)
                 }
             }
             .background(ScreenBackground())
             .navigationTitle("Browse")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Sources", systemImage: "plus") { showsRepositories = true }
@@ -49,13 +56,18 @@ struct BrowseView: View {
             }
             .libraryDestinations()
         }
-        .sheet(isPresented: $showsRepositories) { RepositoriesView() }
+        .sheet(isPresented: $showsRepositories) { SourceCatalogView() }
         .task { await manager.refreshIndexes() }
         .confirmationDialog("Remove Source?", isPresented: removeDialogBinding, presenting: sourceToRemove) { source in
             Button("Remove \(source.name)", role: .destructive) { manager.uninstall(source.id) }
         } message: { _ in
             Text("Chapters you downloaded stay in your library.")
         }
+    }
+
+    /// Installed sources. Mainly adult ones only while Settings → Show Adult Sources is on.
+    private var visibleSources: [SourceInfo] {
+        showsAdult ? manager.installed : manager.installed.filter { $0.contentRating < 2 }
     }
 
     private var emptyState: some View {
@@ -77,12 +89,6 @@ struct BrowseView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var columns: [GridItem] {
-        sizeClass == .regular
-            ? [GridItem(.adaptive(minimum: 320), spacing: 14)]
-            : [GridItem(.flexible())]
-    }
-
     private var removeDialogBinding: Binding<Bool> {
         Binding(get: { sourceToRemove != nil }, set: { if !$0 { sourceToRemove = nil } })
     }
@@ -94,10 +100,10 @@ struct InstalledSourceRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            SourceIcon(url: manager.iconURL(for: source.id))
+            SourceIcon(url: manager.iconURL(for: source.id), size: 48)
             VStack(alignment: .leading, spacing: 2) {
                 Text(source.name)
-                    .font(.body.weight(.semibold))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(Theme.primaryText)
                 // The section header names a single language.
                 let languages = manager.readingLanguages(source)
@@ -109,15 +115,8 @@ struct InstalledSourceRow: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Theme.secondaryText)
-                .accessibilityHidden(true)
         }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
-        .background(Theme.sectionFill, in: .rect(cornerRadius: Theme.Radius.row))
-        .contentShape(.rect(cornerRadius: Theme.Radius.row))
+        .padding(.vertical, 6)
         .accessibilityElement(children: .combine)
     }
 }
@@ -161,11 +160,9 @@ struct LanguageHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.subheadline.weight(.semibold))
+            .font(.subheadline)
+            .textCase(.uppercase)
             .foregroundStyle(Theme.secondaryText)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.top, 10)
-            .padding(.leading, 4)
             .accessibilityAddTraits(.isHeader)
     }
 }
@@ -218,8 +215,11 @@ enum SourceLanguages {
         return language
     }
 
+    /// The language in its own words: "日本語", "中文", "Español".
     private static func title(for code: String) -> String {
-        Locale.current.localizedString(forIdentifier: code) ?? code
+        let locale = Locale(identifier: code)
+        guard let name = locale.localizedString(forIdentifier: code) else { return code }
+        return name.prefix(1).uppercased(with: locale) + name.dropFirst()
     }
 
     static func label(_ codes: [String]) -> String {

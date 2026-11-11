@@ -30,14 +30,13 @@ struct SeriesEditView: View {
                         .font(.body.weight(.semibold))
                     TextField("Author", text: $author, prompt: Text("Author (optional)"))
                 }
-                .listRowBackground(Theme.sectionFill)
+                .listRowBackground(Theme.cardFill)
 
                 Section("Cover") {
                     HStack(spacing: 16) {
                         CoverView(title: trimmed(title).isEmpty ? series.title : trimmed(title),
                                   imageURL: coverPreviewURL, cornerRadius: 8)
                             .frame(width: 64)
-                            .shadow(radius: 0)
                         VStack(alignment: .leading, spacing: 12) {
                             Button("Choose Cover…", systemImage: "photo.on.rectangle") { showsCoverPicker = true }
                             if hasChosenCover {
@@ -51,7 +50,7 @@ struct SeriesEditView: View {
                     }
                     .padding(.vertical, 4)
                 }
-                .listRowBackground(Theme.sectionFill)
+                .listRowBackground(Theme.cardFill)
 
                 Section {
                     ForEach(tags, id: \.self) { tag in
@@ -62,7 +61,7 @@ struct SeriesEditView: View {
                 } header: {
                     Text("Tags")
                 }
-                .listRowBackground(Theme.sectionFill)
+                .listRowBackground(Theme.cardFill)
 
                 Section("Reading Mode") {
                     Picker("Reading Mode", selection: $mode) {
@@ -75,14 +74,13 @@ struct SeriesEditView: View {
                     .pickerStyle(.inline)
                     .labelsHidden()
                 }
-                .listRowBackground(Theme.sectionFill)
+                .listRowBackground(Theme.cardFill)
 
                 Section {
                     ForEach(volumes) { volume in
                         HStack(spacing: 12) {
                             CoverView(title: volume.displayName, imageURL: volume.coverURL, cornerRadius: 6)
                                 .frame(width: 32)
-                                .shadow(radius: 0)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(volume.displayName)
                                 Text("\(volume.pageCount) pages")
@@ -104,7 +102,7 @@ struct SeriesEditView: View {
                 } footer: {
                     Text("Drag to change the reading order.")
                 }
-                .listRowBackground(Theme.sectionFill)
+                .listRowBackground(Theme.cardFill)
             }
             .environment(\.editMode, .constant(.active))
             .scrollContentBackground(.hidden)

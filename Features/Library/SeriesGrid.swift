@@ -89,7 +89,6 @@ struct RecentlyReadCard: View {
                           imageURL: volume.coverURL,
                           cornerRadius: Theme.Radius.smallCover)
                     .frame(width: 56)
-                    .shadow(radius: 0)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(volume.series?.title ?? volume.title)
@@ -109,7 +108,7 @@ struct RecentlyReadCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(12)
-            .background(Theme.sectionFill, in: .rect(cornerRadius: 22))
+            .background(Theme.cardFill, in: .rect(cornerRadius: 22))
             .overlay {
                 RoundedRectangle(cornerRadius: 22).strokeBorder(Theme.sectionStroke, lineWidth: 1)
             }

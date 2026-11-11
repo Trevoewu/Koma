@@ -160,7 +160,7 @@ struct TagManagerView: View {
                     Button("Delete", systemImage: "trash", role: .destructive) { tagToDelete = tag }
                 }
             }
-            .listRowBackground(Theme.sectionFill)
+            .listRowBackground(Theme.cardFill)
         }
         .scrollContentBackground(.hidden)
         .task { SeriesActions.mergeDuplicateTags(in: context) }

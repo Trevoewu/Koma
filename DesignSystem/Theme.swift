@@ -19,8 +19,6 @@ enum Theme {
     /// The fill of primary buttons and selected chips (white in dark mode).
     static let primaryFill = Color.dynamic(light: 0x1C1C1E, dark: 0xF2F2F2)
     static let onPrimary = Color.dynamic(light: 0xFFFFFF, dark: 0x000000)
-    /// The soft glow under a primary button.
-    static let primaryGlow = Color.dynamic(light: 0x000000, dark: 0xFFFFFF, lightAlpha: 0.18, darkAlpha: 0.12)
 
     /// Body text on cards: "Vol. 3 · Page 42 of 186", unselected chips.
     static let bodyText = Color.dynamic(light: 0x3A3A3C, dark: 0xD1D1D6)
@@ -41,6 +39,8 @@ enum Theme {
 
     /// Fill of a section card and of the rows inside it.
     static let sectionFill = Color.dynamic(light: 0x000000, dark: 0xFFFFFF, lightAlpha: 0.045, darkAlpha: 0.05)
+    /// Cards and grouped lists: solid, not a grey tint (white in light mode).
+    static let cardFill = Color.dynamic(light: 0xFFFFFF, dark: 0x1C1C1E)
     static let sectionStroke = Color.dynamic(light: 0x000000, dark: 0xFFFFFF, lightAlpha: 0.08, darkAlpha: 0.10)
     /// Round icon well in a row (44 pt), and small pills.
     static let iconWellFill = Color.dynamic(light: 0x000000, dark: 0xFFFFFF, lightAlpha: 0.07, darkAlpha: 0.10)
@@ -75,6 +75,8 @@ enum Theme {
     enum Size {
         static let iconButton: CGFloat = 44
         static let primaryButtonHeight: CGFloat = 52
+        /// Side margin of grouped lists, so cards line up on every screen and sheet.
+        static let listMargin: CGFloat = 20
     }
 }
 
@@ -98,7 +100,7 @@ extension View {
         self
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.sectionFill, in: .rect(cornerRadius: Theme.Radius.section))
+            .background(Theme.cardFill, in: .rect(cornerRadius: Theme.Radius.section))
             .overlay {
                 RoundedRectangle(cornerRadius: Theme.Radius.section)
                     .strokeBorder(Theme.sectionStroke, lineWidth: 1)

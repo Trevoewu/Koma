@@ -70,7 +70,6 @@ struct RemoteCoverView: View {
                 if let badge { CoverBadge(text: badge).padding(6) }
             }
             .clipShape(.rect(cornerRadius: cornerRadius))
-            .shadow(color: .black.opacity(0.45), radius: 8, y: 6)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(title)
     }

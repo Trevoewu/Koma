@@ -155,7 +155,6 @@ struct ImportGuideView: View {
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.sectionFill, in: .rect(cornerRadius: Theme.Radius.row))
         .accessibilityElement(children: .combine)
     }
 

@@ -35,6 +35,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.defaultReadingMode) private var defaultMode: ReadingMode = .rightToLeft
     @AppStorage(SettingsKey.detectWebtoons) private var detectWebtoons = true
     @AppStorage(SettingsKey.keepScreenOn) private var keepScreenOn = false
+    @AppStorage(SettingsKey.showAdultSources) private var showsAdultSources = false
+    @State private var confirmsAdultSources = false
 
     @Query(filter: #Predicate<Volume> { $0.isFinished }) private var finishedVolumes: [Volume]
     @Query private var allVolumes: [Volume]
@@ -50,6 +52,7 @@ struct SettingsView: View {
                     appearanceSection
                     readingSection
                     librarySection
+                    sourcesSection
                     storageSection
                     helpSection
                     aboutSection
@@ -144,6 +147,30 @@ struct SettingsView: View {
         .sectionCard()
     }
 
+    private var sourcesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle(LocalizedStringResource(stringLiteral: "Sources"))
+            SettingsRow(systemImage: "eye.slash", title: "Show Adult Sources",
+                        subtitle: Text("Sources for mainly adult content")) {
+                Toggle("Show Adult Sources", isOn: Binding(
+                    get: { showsAdultSources },
+                    set: { newValue in
+                        // Turning it on needs an age confirmation. Turning it off does not.
+                        if newValue { confirmsAdultSources = true } else { showsAdultSources = false }
+                    }))
+                    .labelsHidden()
+                    .tint(Theme.switchOn)
+            }
+        }
+        .sectionCard()
+        .confirmationDialog("Show Adult Sources?", isPresented: $confirmsAdultSources, titleVisibility: .visible) {
+            Button("I Am 18 or Older") { showsAdultSources = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("These sources are for adult content. Turn this on only if you are 18 or older.")
+        }
+    }
+
     private var storageSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             sectionTitle(LocalizedStringResource(stringLiteral: "Storage"))
@@ -160,7 +187,6 @@ struct SettingsView: View {
                     .foregroundStyle(Theme.tertiaryText)
             }
             .padding(14)
-            .background(Theme.sectionFill, in: .rect(cornerRadius: Theme.Radius.row))
             .accessibilityElement(children: .combine)
 
             Button {
@@ -300,7 +326,6 @@ struct SettingsRow<Trailing: View>: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
-        .background(Theme.sectionFill, in: .rect(cornerRadius: Theme.Radius.row))
         .contentShape(.rect(cornerRadius: Theme.Radius.row))
         .accessibilityElement(children: .combine)
     }

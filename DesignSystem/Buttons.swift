@@ -16,7 +16,6 @@ struct PrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 24)
             .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: height)
             .background(Theme.primaryFill, in: .capsule)
-            .shadow(color: Theme.primaryGlow, radius: 12, y: 4)
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
             .animation(.snappy(duration: 0.2), value: configuration.isPressed)
     }

@@ -148,4 +148,6 @@ nonisolated enum SettingsKey {
     static let detectWebtoons = "detectWebtoons"
     static let keepScreenOn = "keepScreenOn"
     static let librarySort = "librarySort"
+    /// Settings → Sources: list and allow sources rated mainly adult. Off by default.
+    static let showAdultSources = "showAdultSources"
 }

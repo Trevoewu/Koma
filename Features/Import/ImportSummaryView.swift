@@ -95,7 +95,6 @@ private struct FailureRow: View {
         }
         .padding(.vertical, 12)
         .padding(.horizontal, 14)
-        .background(Theme.sectionFill, in: .rect(cornerRadius: Theme.Radius.row))
         .accessibilityElement(children: .combine)
     }
 }

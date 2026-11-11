@@ -329,7 +329,6 @@ struct SeriesPageView: View {
             HStack(spacing: 12) {
                 CoverView(title: volume.displayName, imageURL: volume.coverURL, cornerRadius: 6)
                     .frame(width: 40)
-                    .shadow(radius: 0)
                     .opacity(volume.isFinished ? 0.55 : 1)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(volume.nameBesideSeries(long: true) ?? volume.displayName)
